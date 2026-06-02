@@ -12,4 +12,20 @@ export class Trip {
   getAllTrips() {
     return this.http.get<any[]>(this.apiUrl);
   }
+
+  createTrip(trip: any) {
+    return this.http.post<any>(this.apiUrl, trip);
+  }
+
+  updateTrip(id: number, trip: any) {
+    return this.http.put<any>(`${this.apiUrl}/${id}`, trip);
+  }
+
+  activateTrip(id: number) {
+    return this.http.put<any>(`${this.apiUrl}/${id}/activate`, {});
+  }
+
+  deactivateTrip(id: number) {
+    return this.http.put<any>(`${this.apiUrl}/${id}/deactivate`, {});
+  }
 }

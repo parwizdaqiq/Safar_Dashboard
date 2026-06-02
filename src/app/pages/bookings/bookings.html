@@ -1,1 +1,102 @@
-<p>bookings works!</p>
+<div class="bookings-page">
+  <div class="page-title">
+    <div>
+      <h1>Bookings</h1>
+      <p>View and manage passenger ticket bookings</p>
+    </div>
+
+    <button class="refresh-btn" (click)="loadBookings()">
+      Refresh
+    </button>
+  </div>
+
+  <div class="summary-grid">
+    <div class="summary-card">
+      <span>Total</span>
+      <strong>{{ filteredBookings.length }}</strong>
+    </div>
+
+    <div class="summary-card">
+      <span>Confirmed Revenue</span>
+      <strong>{{ getTotalConfirmedRevenue() }} AFN</strong>
+    </div>
+  </div>
+
+  <div class="filters-card">
+    <input
+      type="text"
+      placeholder="Search by ticket, passenger, phone or group ID"
+      [(ngModel)]="searchText"
+      (input)="applyFilters()"
+    />
+
+    <select
+      [(ngModel)]="statusFilter"
+      (change)="applyFilters()"
+    >
+      <option value="ALL">All Status</option>
+      <option value="CONFIRMED">Confirmed</option>
+      <option value="PENDING">Pending</option>
+      <option value="CANCELLED">Cancelled</option>
+    </select>
+  </div>
+
+  <div class="table-card">
+    <div *ngIf="isLoading" class="loading">
+      Loading bookings...
+    </div>
+
+    <table *ngIf="!isLoading">
+      <thead>
+        <tr>
+          <th>Ticket</th>
+          <th>Passenger</th>
+          <th>Phone</th>
+          <th>Trip</th>
+          <th>Seat</th>
+          <th>Price</th>
+          <th>Status</th>
+          <th>Group</th>
+          <th class="actions">Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngFor="let booking of filteredBookings">
+          <td>#{{ booking.id }}</td>
+          <td>{{ booking.passengerName || '-' }}</td>
+          <td>{{ booking.passengerPhone || '-' }}</td>
+          <td>{{ booking.tripId }}</td>
+          <td>{{ booking.seatNumber }}</td>
+          <td>{{ booking.totalPrice }} AFN</td>
+          <td>
+            <span
+              class="status"
+              [class.confirmed]="booking.status === 'CONFIRMED'"
+              [class.pending]="booking.status === 'PENDING'"
+              [class.cancelled]="booking.status === 'CANCELLED'"
+            >
+              {{ booking.status }}
+            </span>
+          </td>
+          <td>{{ booking.bookingGroupId || '-' }}</td>
+          <td class="actions">
+            <button
+              class="danger-btn"
+              [disabled]="booking.status === 'CANCELLED'"
+              (click)="cancelBooking(booking)"
+            >
+              Cancel
+            </button>
+          </td>
+        </tr>
+
+        <tr *ngIf="filteredBookings.length === 0">
+          <td colspan="9" class="empty">
+            No bookings found
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

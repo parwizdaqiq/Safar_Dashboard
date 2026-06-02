@@ -12,4 +12,20 @@ export class Vehicle {
   getAllVehicles() {
     return this.http.get<any[]>(this.apiUrl);
   }
+
+  createVehicle(vehicle: any) {
+    return this.http.post<any>(this.apiUrl, vehicle);
+  }
+
+  updateVehicle(id: number, vehicle: any) {
+    return this.http.put<any>(`${this.apiUrl}/${id}`, vehicle);
+  }
+
+  activateVehicle(id: number) {
+    return this.http.put<any>(`${this.apiUrl}/${id}/activate`, {});
+  }
+
+  deactivateVehicle(id: number) {
+    return this.http.put<any>(`${this.apiUrl}/${id}/deactivate`, {});
+  }
 }

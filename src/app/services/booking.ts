@@ -11,12 +11,14 @@ export class Booking {
   constructor(private http: HttpClient) {}
 
   getAllBookings() {
-    console.log('GET BOOKINGS URL:', this.apiUrl);
-
     return this.http.get<any[]>(this.apiUrl).pipe(
       tap((data) => {
         console.log('BOOKINGS RESPONSE:', data);
       })
     );
+  }
+
+  cancelBooking(id: number) {
+    return this.http.put<any>(`${this.apiUrl}/${id}/cancel`, {});
   }
 }

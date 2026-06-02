@@ -1,5 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  OnInit,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Route } from '../../services/route';
 
@@ -24,7 +28,10 @@ export class Routes implements OnInit {
   isLoading = false;
   isSaving = false;
 
-  constructor(private routeService: Route) {}
+  constructor(
+    private routeService: Route,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     this.loadRoutes();
@@ -37,11 +44,13 @@ export class Routes implements OnInit {
       next: (data) => {
         this.routes = data;
         this.isLoading = false;
+        this.cdr.detectChanges();
       },
       error: (error) => {
         console.error('Failed to load routes', error);
         this.isLoading = false;
         alert('Failed to load routes. Check backend or CORS.');
+        this.cdr.detectChanges();
       },
     });
   }
@@ -65,6 +74,7 @@ export class Routes implements OnInit {
     };
 
     this.isSaving = true;
+    this.cdr.detectChanges();
 
     if (this.isEditing && this.form.id !== null) {
       this.routeService.updateRoute(this.form.id, payload).subscribe({
@@ -78,6 +88,7 @@ export class Routes implements OnInit {
           console.error('Update route failed', error);
           this.isSaving = false;
           alert('Failed to update route');
+          this.cdr.detectChanges();
         },
       });
     } else {
@@ -92,6 +103,7 @@ export class Routes implements OnInit {
           console.error('Create route failed', error);
           this.isSaving = false;
           alert('Failed to create route. Check backend or CORS.');
+          this.cdr.detectChanges();
         },
       });
     }
@@ -107,6 +119,8 @@ export class Routes implements OnInit {
       distance: route.distance ?? '',
       estimatedDuration: route.estimatedDuration ?? '',
     };
+
+    this.cdr.detectChanges();
   }
 
   activateRoute(id: number): void {
@@ -117,6 +131,7 @@ export class Routes implements OnInit {
       error: (error) => {
         console.error('Activate route failed', error);
         alert('Failed to activate route');
+        this.cdr.detectChanges();
       },
     });
   }
@@ -129,6 +144,7 @@ export class Routes implements OnInit {
       error: (error) => {
         console.error('Deactivate route failed', error);
         alert('Failed to deactivate route');
+        this.cdr.detectChanges();
       },
     });
   }
@@ -144,5 +160,7 @@ export class Routes implements OnInit {
       distance: '',
       estimatedDuration: '',
     };
+
+    this.cdr.detectChanges();
   }
 }

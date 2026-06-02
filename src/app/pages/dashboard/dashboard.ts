@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { forkJoin } from 'rxjs';
+
 import { Booking } from '../../services/booking';
 import { Route } from '../../services/route';
 import { Trip } from '../../services/trip';
@@ -15,7 +17,6 @@ export class Dashboard implements OnInit {
   activeTrips = 0;
   totalBookings = 0;
   cancelledBookings = 0;
-  confirmedBookings = 0;
   totalVehicles = 0;
   totalRoutes = 0;
   totalRevenue = 0;
@@ -24,7 +25,8 @@ export class Dashboard implements OnInit {
     private tripService: Trip,
     private bookingService: Booking,
     private vehicleService: Vehicle,
-    private routeService: Route
+    private routeService: Route,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -32,66 +34,32 @@ export class Dashboard implements OnInit {
   }
 
   loadStats(): void {
-    this.tripService.getAllTrips().subscribe({
-      next: (trips) => {
-        console.log('TRIPS:', trips);
-
+    forkJoin({
+      trips: this.tripService.getAllTrips(),
+      bookings: this.bookingService.getAllBookings(),
+      vehicles: this.vehicleService.getAllVehicles(),
+      routes: this.routeService.getAllRoutes(),
+    }).subscribe({
+      next: ({ trips, bookings, vehicles, routes }) => {
         this.totalTrips = trips.length;
-        this.activeTrips = trips.filter(
-          (trip) => trip.active === true
-        ).length;
-      },
-      error: (error) => {
-        console.error('Failed to load trips', error);
-      },
-    });
-
-    this.bookingService.getAllBookings().subscribe({
-      next: (bookings) => {
-        console.log('BOOKINGS:', bookings);
+        this.activeTrips = trips.filter((trip) => trip.active === true).length;
 
         this.totalBookings = bookings.length;
-
         this.cancelledBookings = bookings.filter(
           (booking) => booking.status === 'CANCELLED'
         ).length;
 
-        this.confirmedBookings = bookings.filter(
-          (booking) => booking.status === 'CONFIRMED'
-        ).length;
-
         this.totalRevenue = bookings
           .filter((booking) => booking.status === 'CONFIRMED')
-          .reduce(
-            (sum, booking) =>
-              sum + Number(booking.totalPrice || 0),
-            0
-          );
+          .reduce((sum, booking) => sum + Number(booking.totalPrice || 0), 0);
 
-        console.log('TOTAL REVENUE:', this.totalRevenue);
-      },
-      error: (error) => {
-        console.error('Failed to load bookings', error);
-      },
-    });
-
-    this.vehicleService.getAllVehicles().subscribe({
-      next: (vehicles) => {
-        console.log('VEHICLES:', vehicles);
         this.totalVehicles = vehicles.length;
-      },
-      error: (error) => {
-        console.error('Failed to load vehicles', error);
-      },
-    });
-
-    this.routeService.getAllRoutes().subscribe({
-      next: (routes) => {
-        console.log('ROUTES:', routes);
         this.totalRoutes = routes.length;
+
+        this.cdr.detectChanges();
       },
       error: (error) => {
-        console.error('Failed to load routes', error);
+        console.error('Failed to load dashboard stats', error);
       },
     });
   }
