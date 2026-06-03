@@ -1,43 +1,193 @@
-<div class="dashboard">
-  <div class="page-title">
+<div class="bus-dashboard">
+  <div class="green-header">
     <h1>Dashboard</h1>
-    <p>Overview of Safar platform activity</p>
+    <div class="admin-avatar">A</div>
   </div>
 
-  <div class="stats-grid">
+  <div class="stat-grid">
     <div class="stat-card">
-      <span>Total Trips</span>
-      <strong>{{ totalTrips }}</strong>
-    </div>
-
-    <div class="stat-card">
-      <span>Active Trips</span>
-      <strong>{{ activeTrips }}</strong>
+      <div class="icon">👤</div>
+      <div>
+        <span>Total User</span>
+        <strong>{{ totalUsers }}</strong>
+      </div>
     </div>
 
     <div class="stat-card">
-      <span>Total Bookings</span>
-      <strong>{{ totalBookings }}</strong>
-    </div>
-
-    <div class="stat-card danger">
-      <span>Cancelled Bookings</span>
-      <strong>{{ cancelledBookings }}</strong>
-    </div>
-
-    <div class="stat-card">
-      <span>Total Vehicles</span>
-      <strong>{{ totalVehicles }}</strong>
+      <div class="icon">🎫</div>
+      <div>
+        <span>Total Booking</span>
+        <strong>{{ totalBookings }}</strong>
+      </div>
     </div>
 
     <div class="stat-card">
-      <span>Total Routes</span>
-      <strong>{{ totalRoutes }}</strong>
+      <div class="icon">🎟️</div>
+      <div>
+        <span>Total Canceled</span>
+        <strong>{{ cancelledBookings }}</strong>
+      </div>
     </div>
 
-    <div class="stat-card revenue">
-      <span>Total Revenue</span>
-      <strong>{{ totalRevenue }} AFN</strong>
+    <div class="stat-card">
+      <div class="icon">؋</div>
+      <div>
+        <span>Total Earning</span>
+        <strong>{{ totalRevenue }} AFN</strong>
+      </div>
     </div>
+
+    <div class="stat-card">
+      <div class="icon">؋</div>
+      <div>
+        <span>Total Refund</span>
+        <strong>{{ totalRefund }} AFN</strong>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="icon">؋</div>
+      <div>
+        <span>Total Expenses</span>
+        <strong>{{ totalExpenses }} AFN</strong>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="icon">🚌</div>
+      <div>
+        <span>Total Bus</span>
+        <strong>{{ totalVehicles }}</strong>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="icon">🚌</div>
+      <div>
+        <span>Ongoing Bus</span>
+        <strong>{{ activeTrips }}</strong>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="icon">🚌</div>
+      <div>
+        <span>AC Bus</span>
+        <strong>{{ totalVehicles }}</strong>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="icon">🚌</div>
+      <div>
+        <span>Non AC Bus</span>
+        <strong>0</strong>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="icon">🛣️</div>
+      <div>
+        <span>Total Routes</span>
+        <strong>{{ totalRoutes }}</strong>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="icon">👥</div>
+      <div>
+        <span>Total Employee</span>
+        <strong>{{ totalEmployees }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="chart-grid">
+    <section class="chart-card">
+      <h2>Income & Expense</h2>
+
+      <div class="chart-legend">
+        <span class="income-dot"></span> Income
+        <span class="expense-dot"></span> Expenses
+      </div>
+
+      <div class="bar-chart">
+        <div class="bar-month" *ngFor="let item of incomeChart">
+          <div class="bars">
+            <div
+              class="bar income"
+              [style.height.%]="item.incomeHeight"
+              [title]="item.income"
+            ></div>
+            <div
+              class="bar expense"
+              [style.height.%]="item.expenseHeight"
+              [title]="item.expense"
+            ></div>
+          </div>
+          <span>{{ item.month }}</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="chart-card">
+      <h2>Ticket Booking & Canceled</h2>
+
+      <div class="chart-legend">
+        <span class="book-dot"></span> Book
+        <span class="cancel-dot"></span> Cancel
+      </div>
+
+      <div class="bar-chart">
+        <div class="bar-month" *ngFor="let item of bookingChart">
+          <div class="bars">
+            <div
+              class="bar book"
+              [style.height.%]="item.bookedHeight"
+              [title]="item.booked"
+            ></div>
+            <div
+              class="bar cancel"
+              [style.height.%]="item.cancelledHeight"
+              [title]="item.cancelled"
+            ></div>
+          </div>
+          <span>{{ item.month }}</span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="bottom-grid">
+    <section class="bottom-card">
+      <h2>Bus Booking</h2>
+      <div class="simple-pie">
+        <div class="pie"></div>
+        <p>AC Bus / Non-AC Bus</p>
+      </div>
+    </section>
+
+    <section class="bottom-card">
+      <h2>Ticket Booking</h2>
+      <div class="simple-pie blue-pie">
+        <div class="pie"></div>
+        <p>Online / Counter</p>
+      </div>
+    </section>
+
+    <section class="bottom-card">
+      <h2>Recent Bookings</h2>
+
+      <div class="recent-row" *ngFor="let booking of recentBookings">
+        <span>
+          <strong>{{ booking.passengerName || 'Passenger' }}</strong>
+          <small>Ticket #{{ booking.id }}</small>
+        </span>
+        <b>{{ booking.totalPrice || 0 }} AFN</b>
+        <em [class.cancelled]="booking.status === 'CANCELLED'">
+          {{ booking.status }}
+        </em>
+      </div>
+    </section>
   </div>
 </div>

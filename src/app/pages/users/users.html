@@ -1,1 +1,164 @@
-<p>users works!</p>
+<div class="users-page">
+  <div class="page-title">
+    <div>
+      <h1>User Management</h1>
+      <p>Create and manage admins, agencies, drivers, security and users</p>
+    </div>
+
+    <button class="refresh-main" (click)="loadUsers()">Refresh</button>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-box">
+      <span>Total Users</span>
+      <strong>{{ totalUsers }}</strong>
+    </div>
+
+    <div class="stat-box">
+      <span>Admins</span>
+      <strong>{{ adminUsers }}</strong>
+    </div>
+
+    <div class="stat-box">
+      <span>Agencies</span>
+      <strong>{{ agencyUsers }}</strong>
+    </div>
+
+    <div class="stat-box">
+      <span>Drivers</span>
+      <strong>{{ driverUsers }}</strong>
+    </div>
+  </div>
+
+  <div class="content-grid">
+    <div class="form-card">
+      <div class="form-header">
+        <div class="form-icon">👤</div>
+        <div>
+          <h3>{{ isEditing ? 'Edit User' : 'Create User' }}</h3>
+          <p>{{ isEditing ? 'Update selected user' : 'Create role-based account' }}</p>
+        </div>
+      </div>
+
+      <label>Full Name</label>
+      <input type="text" placeholder="Full Name" [(ngModel)]="form.fullName" />
+
+      <label>Email</label>
+      <input type="email" placeholder="Email" [(ngModel)]="form.email" />
+
+      <label>Password</label>
+      <input
+        type="password"
+        [placeholder]="isEditing ? 'Leave empty to keep old password' : 'Password'"
+        [(ngModel)]="form.password"
+      />
+
+      <label>Phone</label>
+      <input type="text" placeholder="+93..." [(ngModel)]="form.phone" />
+
+      <label>Role</label>
+      <select [(ngModel)]="form.role">
+        <option *ngFor="let role of roles" [value]="role">
+          {{ role }}
+        </option>
+      </select>
+
+      <button class="primary-btn" (click)="saveUser()" [disabled]="isSaving">
+        {{ isSaving ? 'Saving...' : isEditing ? 'Update User' : 'Create User' }}
+      </button>
+
+      <button *ngIf="isEditing" class="secondary-btn" (click)="resetForm()">
+        Cancel Edit
+      </button>
+    </div>
+
+    <div class="table-card">
+      <div class="table-header">
+        <div>
+          <h3>All Users</h3>
+          <p>{{ filteredUsers.length }} users shown</p>
+        </div>
+      </div>
+
+      <div class="filters-card">
+        <input
+          type="text"
+          placeholder="Search name, email, phone or ID"
+          [(ngModel)]="searchText"
+          (input)="applyFilters()"
+        />
+
+        <select [(ngModel)]="roleFilter" (change)="applyFilters()">
+          <option value="ALL">All Roles</option>
+          <option *ngFor="let role of roles" [value]="role">
+            {{ role }}
+          </option>
+        </select>
+      </div>
+
+      <div *ngIf="isLoading" class="loading">Loading users...</div>
+
+      <div class="table-wrapper" *ngIf="!isLoading">
+        <table>
+          <thead>
+            <tr>
+              <th class="id-col">ID</th>
+              <th class="name-col">Name</th>
+              <th class="email-col">Email</th>
+              <th class="phone-col">Phone</th>
+              <th class="role-col">Role</th>
+              <th class="action-col">Actions</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let user of filteredUsers">
+              <td class="id-col">
+                <strong>#{{ user.id }}</strong>
+                <small>User ID</small>
+              </td>
+
+              <td class="name-col">
+                <strong class="truncate">{{ user.fullName || '-' }}</strong>
+                <small>Full name</small>
+              </td>
+
+              <td class="email-col">
+                <strong class="truncate">{{ user.email || '-' }}</strong>
+                <small>Email</small>
+              </td>
+
+              <td class="phone-col">
+                <strong>{{ user.phone || '-' }}</strong>
+                <small>Phone</small>
+              </td>
+
+              <td class="role-col">
+                <span
+                  class="role-badge"
+                  [class.admin]="user.role === 'ADMIN'"
+                  [class.agency]="user.role === 'AGENCY'"
+                  [class.driver]="user.role === 'DRIVER'"
+                  [class.security]="user.role === 'SECURITY'"
+                  [class.normal]="user.role === 'USER'"
+                >
+                  {{ user.role }}
+                </span>
+              </td>
+
+              <td class="action-col actions">
+                <button class="edit-btn" (click)="editUser(user)">
+                  Edit
+                </button>
+              </td>
+            </tr>
+
+            <tr *ngIf="filteredUsers.length === 0">
+              <td colspan="6" class="empty">No users found</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

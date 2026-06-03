@@ -1,4 +1,4 @@
-<div class="admin-shell">
+<div class="admin-shell" *ngIf="!isLoginPage">
   <aside class="sidebar">
     <div class="brand">
       <div class="brand-icon">S</div>
@@ -17,7 +17,7 @@
       <a routerLink="/vehicles" routerLinkActive="active">Vehicles</a>
       <a routerLink="/bookings" routerLinkActive="active">Bookings</a>
       <a routerLink="/agencies" routerLinkActive="active">Agencies</a>
-      <a routerLink="/users" routerLinkActive="active">Users</a>
+      <a routerLink="/users" routerLinkActive="active">Users Management</a>
     </nav>
   </aside>
 
@@ -27,7 +27,8 @@
         <h2>Safar Admin</h2>
         <p>Manage routes, trips, bookings and agencies</p>
       </div>
-      <button class="admin-btn">Admin</button>
+
+      <button class="admin-btn" (click)="logout()">Logout</button>
     </header>
 
     <section class="page-content">
@@ -35,3 +36,5 @@
     </section>
   </main>
 </div>
+
+<router-outlet *ngIf="isLoginPage"></router-outlet>

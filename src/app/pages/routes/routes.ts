@@ -1,9 +1,5 @@
 import { CommonModule } from '@angular/common';
-import {
-  ChangeDetectorRef,
-  Component,
-  OnInit,
-} from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Route } from '../../services/route';
 
@@ -28,6 +24,30 @@ export class Routes implements OnInit {
   isLoading = false;
   isSaving = false;
 
+  get totalRoutes(): number {
+    return this.routes.length;
+  }
+
+  get activeRoutes(): number {
+    return this.routes.filter((route) => route.active === true).length;
+  }
+
+  get inactiveRoutes(): number {
+    return this.routes.filter((route) => route.active !== true).length;
+  }
+
+  get longestRoute(): string {
+    if (this.routes.length === 0) return '0';
+
+    const distances = this.routes
+      .map((route) => Number(String(route.distance || '').replace(/\D/g, '')))
+      .filter((value) => !isNaN(value));
+
+    if (distances.length === 0) return '0';
+
+    return `${Math.max(...distances)} km`;
+  }
+
   constructor(
     private routeService: Route,
     private cdr: ChangeDetectorRef
@@ -42,7 +62,7 @@ export class Routes implements OnInit {
 
     this.routeService.getAllRoutes().subscribe({
       next: (data) => {
-        this.routes = data;
+        this.routes = [...data].reverse();
         this.isLoading = false;
         this.cdr.detectChanges();
       },
@@ -82,7 +102,6 @@ export class Routes implements OnInit {
           this.isSaving = false;
           this.resetForm();
           this.loadRoutes();
-          alert('Route updated successfully');
         },
         error: (error) => {
           console.error('Update route failed', error);
@@ -97,7 +116,6 @@ export class Routes implements OnInit {
           this.isSaving = false;
           this.resetForm();
           this.loadRoutes();
-          alert('Route created successfully');
         },
         error: (error) => {
           console.error('Create route failed', error);
@@ -125,9 +143,7 @@ export class Routes implements OnInit {
 
   activateRoute(id: number): void {
     this.routeService.activateRoute(id).subscribe({
-      next: () => {
-        this.loadRoutes();
-      },
+      next: () => this.loadRoutes(),
       error: (error) => {
         console.error('Activate route failed', error);
         alert('Failed to activate route');
@@ -138,9 +154,7 @@ export class Routes implements OnInit {
 
   deactivateRoute(id: number): void {
     this.routeService.deactivateRoute(id).subscribe({
-      next: () => {
-        this.loadRoutes();
-      },
+      next: () => this.loadRoutes(),
       error: (error) => {
         console.error('Deactivate route failed', error);
         alert('Failed to deactivate route');

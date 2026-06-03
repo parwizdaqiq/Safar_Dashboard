@@ -1,140 +1,171 @@
 <div class="trips-page">
   <div class="page-title">
-    <h1>Trips</h1>
-    <p>Create trips by selecting route, vehicle, date, time and price</p>
+    <div>
+      <h1>Trips</h1>
+      <p>Create and manage Safar trip schedules</p>
+    </div>
+
+    <button class="refresh-main" (click)="loadTrips()">Refresh</button>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-box">
+      <span>Total Trips</span>
+      <strong>{{ totalTrips }}</strong>
+    </div>
+
+    <div class="stat-box">
+      <span>Active Trips</span>
+      <strong>{{ activeTrips }}</strong>
+    </div>
+
+    <div class="stat-box">
+      <span>Today Trips</span>
+      <strong>{{ todayTrips }}</strong>
+    </div>
+
+    <div class="stat-box">
+      <span>Average Price</span>
+      <strong>{{ averagePrice }} AFN</strong>
+    </div>
   </div>
 
   <div class="content-grid">
     <div class="form-card">
-      <h3>{{ isEditing ? 'Edit Trip' : 'Create Trip' }}</h3>
+      <div class="form-header">
+        <div class="form-icon">🚌</div>
+        <div>
+          <h3>{{ isEditing ? 'Edit Trip' : 'Create Trip' }}</h3>
+          <p>{{ isEditing ? 'Update trip details' : 'Add new schedule' }}</p>
+        </div>
+      </div>
 
+      <label>Route</label>
       <select [(ngModel)]="form.routeId">
         <option [ngValue]="null">Select Route</option>
-        <option
-          *ngFor="let route of routes"
-          [ngValue]="route.id"
-        >
+        <option *ngFor="let route of routes" [ngValue]="route.id">
           {{ route.fromCity }} → {{ route.toCity }}
         </option>
       </select>
 
+      <label>Vehicle</label>
       <select [(ngModel)]="form.vehicleId">
         <option [ngValue]="null">Select Vehicle</option>
-        <option
-          *ngFor="let vehicle of vehicles"
-          [ngValue]="vehicle.id"
-        >
-          {{ vehicle.companyName }} - {{ vehicle.plateNumber }} -
-          {{ vehicle.seatCount }} seats
+        <option *ngFor="let vehicle of vehicles" [ngValue]="vehicle.id">
+          {{ vehicle.companyName }} - {{ vehicle.plateNumber }}
         </option>
       </select>
 
-      <input
-        type="date"
-        [(ngModel)]="form.departureDate"
-      />
+      <div class="two-fields">
+        <div>
+          <label>Date</label>
+          <input type="date" [(ngModel)]="form.departureDate" />
+        </div>
 
-      <input
-        type="time"
-        [(ngModel)]="form.departureTime"
-      />
+        <div>
+          <label>Time</label>
+          <input type="time" [(ngModel)]="form.departureTime" />
+        </div>
+      </div>
 
-      <input
-        type="number"
-        placeholder="Price"
-        [(ngModel)]="form.price"
-      />
+      <label>Price</label>
+      <input type="number" placeholder="Ticket price" [(ngModel)]="form.price" />
 
-      <button
-        class="primary-btn"
-        (click)="saveTrip()"
-        [disabled]="isSaving"
-      >
+      <button class="primary-btn" (click)="saveTrip()" [disabled]="isSaving">
         {{ isSaving ? 'Saving...' : isEditing ? 'Update Trip' : 'Create Trip' }}
       </button>
 
-      <button
-        *ngIf="isEditing"
-        class="secondary-btn"
-        (click)="resetForm()"
-      >
+      <button *ngIf="isEditing" class="secondary-btn" (click)="resetForm()">
         Cancel Edit
       </button>
     </div>
 
     <div class="table-card">
       <div class="table-header">
-        <h3>All Trips</h3>
-        <button (click)="loadTrips()">Refresh</button>
+        <div>
+          <h3>All Trips</h3>
+          <p>{{ trips.length }} trips available</p>
+        </div>
       </div>
 
-      <div *ngIf="isLoading" class="loading">
-        Loading trips...
+      <div *ngIf="isLoading" class="loading">Loading trips...</div>
+
+      <div class="table-wrapper" *ngIf="!isLoading">
+        <table>
+          <thead>
+            <tr>
+              <th class="trip-col">Trip</th>
+              <th class="route-col">Route</th>
+              <th class="vehicle-col">Vehicle</th>
+              <th class="date-col">Date</th>
+              <th class="price-col">Price</th>
+              <th class="seat-col">Seats</th>
+              <th class="status-col">Status</th>
+              <th class="action-col">Actions</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let trip of trips">
+              <td class="trip-col">
+                <strong>#{{ trip.id }}</strong>
+                <small>ID</small>
+              </td>
+
+              <td class="route-col">
+                <strong class="truncate">{{ getRouteName(trip.routeId) }}</strong>
+                <small>Direct</small>
+              </td>
+
+              <td class="vehicle-col">
+                <strong class="truncate">{{ getVehicleName(trip.vehicleId) }}</strong>
+                <small>{{ getVehicleSeats(trip.vehicleId) }} seats</small>
+              </td>
+
+              <td class="date-col">
+                <strong>{{ trip.departureDate }}</strong>
+                <small>{{ formatTime(trip.departureTime) }}</small>
+              </td>
+
+              <td class="price-col">
+                <span class="price-badge">{{ trip.price }} AFN</span>
+              </td>
+
+              <td class="seat-col">{{ trip.availableSeats }}</td>
+
+              <td class="status-col">
+                <span class="status" [class.active]="trip.active" [class.inactive]="!trip.active">
+                  {{ trip.active ? 'ACTIVE' : 'INACTIVE' }}
+                </span>
+              </td>
+
+              <td class="action-col actions">
+                <button class="edit-btn" (click)="editTrip(trip)">Edit</button>
+
+                <button
+                  *ngIf="trip.active"
+                  class="danger-btn"
+                  (click)="deactivateTrip(trip.id)"
+                >
+                  Disable
+                </button>
+
+                <button
+                  *ngIf="!trip.active"
+                  class="success-btn"
+                  (click)="activateTrip(trip.id)"
+                >
+                  Enable
+                </button>
+              </td>
+            </tr>
+
+            <tr *ngIf="trips.length === 0">
+              <td colspan="8" class="empty">No trips found</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-
-      <table *ngIf="!isLoading">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Route</th>
-            <th>Vehicle</th>
-            <th>Date</th>
-            <th>Time</th>
-            <th>Price</th>
-            <th>Seats</th>
-            <th>Status</th>
-            <th class="actions">Actions</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          <tr *ngFor="let trip of trips">
-            <td>#{{ trip.id }}</td>
-            <td>{{ getRouteName(trip.routeId) }}</td>
-            <td>{{ getVehicleName(trip.vehicleId) }}</td>
-            <td>{{ trip.departureDate }}</td>
-            <td>{{ trip.departureTime }}</td>
-            <td>{{ trip.price }} AFN</td>
-            <td>{{ trip.availableSeats }}</td>
-            <td>
-              <span
-                class="status"
-                [class.active]="trip.active"
-                [class.inactive]="!trip.active"
-              >
-                {{ trip.active ? 'ACTIVE' : 'INACTIVE' }}
-              </span>
-            </td>
-            <td class="actions">
-              <button class="edit-btn" (click)="editTrip(trip)">
-                Edit
-              </button>
-
-              <button
-                *ngIf="trip.active"
-                class="danger-btn"
-                (click)="deactivateTrip(trip.id)"
-              >
-                Deactivate
-              </button>
-
-              <button
-                *ngIf="!trip.active"
-                class="success-btn"
-                (click)="activateTrip(trip.id)"
-              >
-                Activate
-              </button>
-            </td>
-          </tr>
-
-          <tr *ngIf="trips.length === 0">
-            <td colspan="9" class="empty">
-              No trips found
-            </td>
-          </tr>
-        </tbody>
-      </table>
     </div>
   </div>
 </div>

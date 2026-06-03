@@ -1,111 +1,148 @@
 <div class="routes-page">
   <div class="page-title">
-    <h1>Routes</h1>
-    <p>Create and manage travel routes</p>
+    <div>
+      <h1>Routes</h1>
+      <p>Create and manage Safar travel routes</p>
+    </div>
+
+    <button class="refresh-main" (click)="loadRoutes()">Refresh</button>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-box">
+      <span>Total Routes</span>
+      <strong>{{ totalRoutes }}</strong>
+    </div>
+
+    <div class="stat-box">
+      <span>Active Routes</span>
+      <strong>{{ activeRoutes }}</strong>
+    </div>
+
+    <div class="stat-box">
+      <span>Inactive Routes</span>
+      <strong>{{ inactiveRoutes }}</strong>
+    </div>
+
+    <div class="stat-box">
+      <span>Longest Route</span>
+      <strong>{{ longestRoute }}</strong>
+    </div>
   </div>
 
   <div class="content-grid">
     <div class="form-card">
-      <h3>{{ isEditing ? 'Edit Route' : 'Create Route' }}</h3>
+      <div class="form-header">
+        <div class="form-icon">🛣️</div>
+        <div>
+          <h3>{{ isEditing ? 'Edit Route' : 'Create Route' }}</h3>
+          <p>{{ isEditing ? 'Update selected route' : 'Add new travel route' }}</p>
+        </div>
+      </div>
 
+      <label>From City</label>
+      <input type="text" placeholder="From City" [(ngModel)]="form.fromCity" />
+
+      <label>To City</label>
+      <input type="text" placeholder="To City" [(ngModel)]="form.toCity" />
+
+      <label>Distance</label>
+      <input type="text" placeholder="e.g. 820 km" [(ngModel)]="form.distance" />
+
+      <label>Duration</label>
       <input
         type="text"
-        placeholder="From City"
-        [(ngModel)]="form.fromCity"
-      />
-
-      <input
-        type="text"
-        placeholder="To City"
-        [(ngModel)]="form.toCity"
-      />
-
-      <input
-        type="text"
-        placeholder="Distance e.g. 820 km"
-        [(ngModel)]="form.distance"
-      />
-
-      <input
-        type="text"
-        placeholder="Duration e.g. 12 hours"
+        placeholder="e.g. 12 hours"
         [(ngModel)]="form.estimatedDuration"
       />
 
-      <button class="primary-btn" (click)="saveRoute()">
-        {{ isEditing ? 'Update Route' : 'Create Route' }}
+      <button class="primary-btn" (click)="saveRoute()" [disabled]="isSaving">
+        {{ isSaving ? 'Saving...' : isEditing ? 'Update Route' : 'Create Route' }}
       </button>
 
-      <button
-        *ngIf="isEditing"
-        class="secondary-btn"
-        (click)="resetForm()"
-      >
+      <button *ngIf="isEditing" class="secondary-btn" (click)="resetForm()">
         Cancel Edit
       </button>
     </div>
 
     <div class="table-card">
       <div class="table-header">
-        <h3>All Routes</h3>
-        <button (click)="loadRoutes()">Refresh</button>
+        <div>
+          <h3>All Routes</h3>
+          <p>{{ routes.length }} routes available</p>
+        </div>
       </div>
 
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Route</th>
-            <th>Distance</th>
-            <th>Duration</th>
-            <th>Status</th>
-            <th class="actions">Actions</th>
-          </tr>
-        </thead>
+      <div *ngIf="isLoading" class="loading">Loading routes...</div>
 
-        <tbody>
-          <tr *ngFor="let route of routes">
-            <td>#{{ route.id }}</td>
-            <td>{{ route.fromCity }} → {{ route.toCity }}</td>
-            <td>{{ route.distance }}</td>
-            <td>{{ route.estimatedDuration }}</td>
-            <td>
-              <span
-                class="status"
-                [class.active]="route.active"
-                [class.inactive]="!route.active"
-              >
-                {{ route.active ? 'ACTIVE' : 'INACTIVE' }}
-              </span>
-            </td>
-            <td class="actions">
-              <button class="edit-btn" (click)="editRoute(route)">
-                Edit
-              </button>
+      <div class="table-wrapper" *ngIf="!isLoading">
+        <table>
+          <thead>
+            <tr>
+              <th class="id-col">ID</th>
+              <th class="route-col">Route</th>
+              <th class="distance-col">Distance</th>
+              <th class="duration-col">Duration</th>
+              <th class="status-col">Status</th>
+              <th class="action-col">Actions</th>
+            </tr>
+          </thead>
 
-              <button
-                *ngIf="route.active"
-                class="danger-btn"
-                (click)="deactivateRoute(route.id)"
-              >
-                Deactivate
-              </button>
+          <tbody>
+            <tr *ngFor="let route of routes">
+              <td class="id-col">
+                <strong>#{{ route.id }}</strong>
+                <small>Route ID</small>
+              </td>
 
-              <button
-                *ngIf="!route.active"
-                class="success-btn"
-                (click)="activateRoute(route.id)"
-              >
-                Activate
-              </button>
-            </td>
-          </tr>
+              <td class="route-col">
+                <strong class="truncate">{{ route.fromCity }} → {{ route.toCity }}</strong>
+                <small>Direct route</small>
+              </td>
 
-          <tr *ngIf="routes.length === 0">
-            <td colspan="6" class="empty">No routes found</td>
-          </tr>
-        </tbody>
-      </table>
+              <td class="distance-col">
+                <span class="distance-badge">{{ route.distance }}</span>
+              </td>
+
+              <td class="duration-col">{{ route.estimatedDuration }}</td>
+
+              <td class="status-col">
+                <span
+                  class="status"
+                  [class.active]="route.active"
+                  [class.inactive]="!route.active"
+                >
+                  {{ route.active ? 'ACTIVE' : 'INACTIVE' }}
+                </span>
+              </td>
+
+              <td class="action-col actions">
+                <button class="edit-btn" (click)="editRoute(route)">Edit</button>
+
+                <button
+                  *ngIf="route.active"
+                  class="danger-btn"
+                  (click)="deactivateRoute(route.id)"
+                >
+                  Disable
+                </button>
+
+                <button
+                  *ngIf="!route.active"
+                  class="success-btn"
+                  (click)="activateRoute(route.id)"
+                >
+                  Enable
+                </button>
+              </td>
+            </tr>
+
+            <tr *ngIf="routes.length === 0">
+              <td colspan="6" class="empty">No routes found</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>

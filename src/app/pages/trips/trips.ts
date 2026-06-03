@@ -1,9 +1,5 @@
 import { CommonModule } from '@angular/common';
-import {
-  ChangeDetectorRef,
-  Component,
-  OnInit,
-} from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { Trip } from '../../services/trip';
@@ -33,6 +29,30 @@ export class Trips implements OnInit {
   isEditing = false;
   isLoading = false;
   isSaving = false;
+
+  get totalTrips(): number {
+    return this.trips.length;
+  }
+
+  get activeTrips(): number {
+    return this.trips.filter((trip) => trip.active === true).length;
+  }
+
+  get todayTrips(): number {
+    const today = new Date().toISOString().split('T')[0];
+    return this.trips.filter((trip) => trip.departureDate === today).length;
+  }
+
+  get averagePrice(): number {
+    if (this.trips.length === 0) return 0;
+
+    const total = this.trips.reduce(
+      (sum, trip) => sum + Number(trip.price || 0),
+      0
+    );
+
+    return Math.round(total / this.trips.length);
+  }
 
   constructor(
     private tripService: Trip,
@@ -69,9 +89,7 @@ export class Trips implements OnInit {
   loadRoutes(): void {
     this.routeService.getAllRoutes().subscribe({
       next: (data) => {
-        this.routes = data.filter(
-          (route) => route.active === true
-        );
+        this.routes = data.filter((route) => route.active === true);
         this.cdr.detectChanges();
       },
       error: (error) => {
@@ -84,9 +102,7 @@ export class Trips implements OnInit {
   loadVehicles(): void {
     this.vehicleService.getAllVehicles().subscribe({
       next: (data) => {
-        this.vehicles = data.filter(
-          (vehicle) => vehicle.active === true
-        );
+        this.vehicles = data.filter((vehicle) => vehicle.active === true);
         this.cdr.detectChanges();
       },
       error: (error) => {
@@ -158,7 +174,7 @@ export class Trips implements OnInit {
       routeId: trip.routeId,
       vehicleId: trip.vehicleId,
       departureDate: trip.departureDate,
-      departureTime: trip.departureTime,
+      departureTime: this.formatTimeForInput(trip.departureTime),
       price: trip.price,
     };
 
@@ -212,7 +228,22 @@ export class Trips implements OnInit {
     const vehicle = this.vehicles.find((item) => item.id === vehicleId);
 
     return vehicle
-      ? `${vehicle.companyName} • ${vehicle.plateNumber} • ${vehicle.seatCount} seats`
+      ? `${vehicle.companyName} • ${vehicle.plateNumber}`
       : `Vehicle #${vehicleId}`;
+  }
+
+  getVehicleSeats(vehicleId: number): number {
+    const vehicle = this.vehicles.find((item) => item.id === vehicleId);
+    return vehicle ? Number(vehicle.seatCount || 0) : 0;
+  }
+
+  formatTime(value: string): string {
+    if (!value) return '-';
+    return value.length >= 5 ? value.substring(0, 5) : value;
+  }
+
+  formatTimeForInput(value: string): string {
+    if (!value) return '';
+    return value.length >= 5 ? value.substring(0, 5) : value;
   }
 }

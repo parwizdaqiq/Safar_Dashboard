@@ -7,14 +7,19 @@ import { Vehicles } from './pages/vehicles/vehicles';
 import { Bookings } from './pages/bookings/bookings';
 import { Agencies } from './pages/agencies/agencies';
 import { Users } from './pages/users/users';
+import { Login } from './pages/login/login';
+import { adminAuthGuard } from './guards/admin-auth-guard';
 
 export const routes: Routes = [
-  { path: '', component: Dashboard },
-  { path: 'trips', component: Trips },
-  { path: 'routes', component: RoutesPage },
-  { path: 'vehicles', component: Vehicles },
-  { path: 'bookings', component: Bookings },
-  { path: 'agencies', component: Agencies },
-  { path: 'users', component: Users },
+  { path: 'login', component: Login },
+
+  { path: '', component: Dashboard, canActivate: [adminAuthGuard] },
+  { path: 'trips', component: Trips, canActivate: [adminAuthGuard] },
+  { path: 'routes', component: RoutesPage, canActivate: [adminAuthGuard] },
+  { path: 'vehicles', component: Vehicles, canActivate: [adminAuthGuard] },
+  { path: 'bookings', component: Bookings, canActivate: [adminAuthGuard] },
+  { path: 'agencies', component: Agencies, canActivate: [adminAuthGuard] },
+  { path: 'users', component: Users, canActivate: [adminAuthGuard] },
+
   { path: '**', redirectTo: '' },
 ];

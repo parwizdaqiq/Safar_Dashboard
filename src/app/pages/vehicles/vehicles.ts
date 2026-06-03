@@ -25,6 +25,25 @@ export class Vehicles implements OnInit {
   isLoading = false;
   isSaving = false;
 
+  get totalVehicles(): number {
+    return this.vehicles.length;
+  }
+
+  get activeVehicles(): number {
+    return this.vehicles.filter((vehicle) => vehicle.active === true).length;
+  }
+
+  get totalBuses(): number {
+    return this.vehicles.filter((vehicle) => vehicle.vehicleType === 'BUS').length;
+  }
+
+  get totalSeats(): number {
+    return this.vehicles.reduce(
+      (sum, vehicle) => sum + Number(vehicle.seatCount || 0),
+      0
+    );
+  }
+
   constructor(private vehicleService: Vehicle) {}
 
   ngOnInit(): void {
@@ -36,7 +55,7 @@ export class Vehicles implements OnInit {
 
     this.vehicleService.getAllVehicles().subscribe({
       next: (data) => {
-        this.vehicles = data;
+        this.vehicles = [...data].reverse();
         this.isLoading = false;
       },
       error: (error) => {
