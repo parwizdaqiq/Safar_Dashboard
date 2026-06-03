@@ -14,6 +14,12 @@ export class User {
     return this.http.get<any[]>(this.baseUrl);
   }
 
+  getAgencyDrivers(agencyId: number): Observable<any[]> {
+    return this.http.get<any[]>(
+      `${this.baseUrl}/agency/${agencyId}/drivers`
+    );
+  }
+
   createUser(data: any): Observable<any> {
     return this.http.post(this.baseUrl, data);
   }

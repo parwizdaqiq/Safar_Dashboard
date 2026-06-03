@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { Trip } from '../../services/trip';
 import { Route } from '../../services/route';
 import { Vehicle } from '../../services/vehicle';
+import { User } from '../../services/user';
 import { AdminAuth } from '../../services/admin-auth';
 
 @Component({
@@ -17,11 +18,13 @@ export class Trips implements OnInit {
   trips: any[] = [];
   routes: any[] = [];
   vehicles: any[] = [];
+  drivers: any[] = [];
 
   form = {
     id: null as number | null,
     routeId: null as number | null,
     vehicleId: null as number | null,
+    driverId: null as number | null,
     departureDate: '',
     departureTime: '',
     price: null as number | null,
@@ -35,6 +38,7 @@ export class Trips implements OnInit {
     private tripService: Trip,
     private routeService: Route,
     private vehicleService: Vehicle,
+    private userService: User,
     private authService: AdminAuth,
     private cdr: ChangeDetectorRef
   ) {}
@@ -42,6 +46,7 @@ export class Trips implements OnInit {
   ngOnInit(): void {
     this.loadRoutes();
     this.loadVehicles();
+    this.loadDrivers();
     this.loadTrips();
   }
 
@@ -132,10 +137,30 @@ export class Trips implements OnInit {
     });
   }
 
+  loadDrivers(): void {
+    if (!this.currentUserId) {
+      this.drivers = [];
+      return;
+    }
+
+    this.userService.getAgencyDrivers(this.currentUserId).subscribe({
+      next: (data: any[]) => {
+        this.drivers = data;
+        this.cdr.detectChanges();
+      },
+      error: (error: any) => {
+        console.error('Failed to load drivers', error);
+        this.drivers = [];
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
   saveTrip(): void {
     if (
       !this.form.routeId ||
       !this.form.vehicleId ||
+      !this.form.driverId ||
       !this.form.departureDate ||
       !this.form.departureTime ||
       !this.form.price
@@ -153,9 +178,19 @@ export class Trips implements OnInit {
       return;
     }
 
+    const selectedDriver = this.drivers.find(
+      (driver: any) => driver.id === this.form.driverId
+    );
+
+    if (!selectedDriver) {
+      alert('Please select a valid driver');
+      return;
+    }
+
     const payload = {
       routeId: Number(this.form.routeId),
       vehicleId: Number(this.form.vehicleId),
+      driverId: Number(this.form.driverId),
       departureDate: this.form.departureDate,
       departureTime: this.form.departureTime,
       price: Number(this.form.price),
@@ -164,34 +199,21 @@ export class Trips implements OnInit {
     this.isSaving = true;
     this.cdr.detectChanges();
 
-    if (this.isEditing && this.form.id !== null) {
-      this.tripService.updateTrip(this.form.id, payload).subscribe({
-        next: () => {
-          this.isSaving = false;
-          this.resetForm();
-          this.loadTrips();
-        },
-        error: (error: any) => {
-          console.error('Failed to update trip', error);
-          this.isSaving = false;
-          alert('Failed to update trip');
-          this.cdr.detectChanges();
-        },
-      });
+    const request =
+      this.isEditing && this.form.id !== null
+        ? this.tripService.updateTrip(this.form.id, payload)
+        : this.tripService.createTrip(payload);
 
-      return;
-    }
-
-    this.tripService.createTrip(payload).subscribe({
+    request.subscribe({
       next: () => {
         this.isSaving = false;
         this.resetForm();
         this.loadTrips();
       },
       error: (error: any) => {
-        console.error('Failed to create trip', error);
+        console.error('Failed to save trip', error);
         this.isSaving = false;
-        alert('Failed to create trip');
+        alert('Failed to save trip');
         this.cdr.detectChanges();
       },
     });
@@ -204,6 +226,7 @@ export class Trips implements OnInit {
       id: trip.id,
       routeId: trip.routeId,
       vehicleId: trip.vehicleId,
+      driverId: trip.driverId ?? null,
       departureDate: trip.departureDate,
       departureTime: this.formatTimeForInput(trip.departureTime),
       price: trip.price,
@@ -242,6 +265,7 @@ export class Trips implements OnInit {
       id: null,
       routeId: null,
       vehicleId: null,
+      driverId: null,
       departureDate: '',
       departureTime: '',
       price: null,
@@ -261,6 +285,11 @@ export class Trips implements OnInit {
     return vehicle
       ? `${vehicle.vehicleType} • ${vehicle.plateNumber}`
       : `Vehicle #${vehicleId}`;
+  }
+
+  getDriverName(driverId: number): string {
+    const driver = this.drivers.find((item: any) => item.id === driverId);
+    return driver ? driver.fullName : 'No Driver';
   }
 
   getVehicleSeats(vehicleId: number): number {

@@ -3,6 +3,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { User } from '../../services/user';
+import { AdminAuth } from '../../services/admin-auth';
 
 @Component({
   selector: 'app-users',
@@ -14,7 +15,8 @@ export class Users implements OnInit {
   users: any[] = [];
   filteredUsers: any[] = [];
 
-  roles = ['ADMIN', 'AGENCY', 'DRIVER', 'SECURITY', 'USER'];
+  adminRoles = ['ADMIN', 'AGENCY', 'SECURITY', 'USER'];
+  agencyRoles = ['DRIVER'];
 
   searchText = '';
   roleFilter = 'ALL';
@@ -34,11 +36,39 @@ export class Users implements OnInit {
 
   constructor(
     private userService: User,
+    private authService: AdminAuth,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
+    this.resetForm();
     this.loadUsers();
+  }
+
+  get currentUserId(): number | null {
+    return this.authService.getUserId();
+  }
+
+  get isAgency(): boolean {
+    return this.authService.isAgency();
+  }
+
+  get isAdmin(): boolean {
+    return this.authService.isAdmin();
+  }
+
+  get roles(): string[] {
+    return this.isAgency ? this.agencyRoles : this.adminRoles;
+  }
+
+  get pageTitle(): string {
+    return this.isAgency ? 'Driver Management' : 'User Management';
+  }
+
+  get pageSubtitle(): string {
+    return this.isAgency
+      ? 'Create and manage drivers for your agency'
+      : 'Create and manage admins, agencies, security and users';
   }
 
   get totalUsers(): number {
@@ -46,29 +76,34 @@ export class Users implements OnInit {
   }
 
   get adminUsers(): number {
-    return this.users.filter((user) => user.role === 'ADMIN').length;
+    return this.users.filter((user: any) => user.role === 'ADMIN').length;
   }
 
   get agencyUsers(): number {
-    return this.users.filter((user) => user.role === 'AGENCY').length;
+    return this.users.filter((user: any) => user.role === 'AGENCY').length;
   }
 
   get driverUsers(): number {
-    return this.users.filter((user) => user.role === 'DRIVER').length;
+    return this.users.filter((user: any) => user.role === 'DRIVER').length;
   }
 
   loadUsers(): void {
     this.isLoading = true;
     this.cdr.detectChanges();
 
-    this.userService.getAllUsers().subscribe({
-      next: (data) => {
+    const request =
+      this.isAgency && this.currentUserId
+        ? this.userService.getAgencyDrivers(this.currentUserId)
+        : this.userService.getAllUsers();
+
+    request.subscribe({
+      next: (data: any[]) => {
         this.users = [...data].reverse();
         this.applyFilters();
         this.isLoading = false;
         this.cdr.detectChanges();
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Failed to load users', error);
         this.isLoading = false;
         alert('Failed to load users');
@@ -80,7 +115,7 @@ export class Users implements OnInit {
   applyFilters(): void {
     const search = this.searchText.trim().toLowerCase();
 
-    this.filteredUsers = this.users.filter((user) => {
+    this.filteredUsers = this.users.filter((user: any) => {
       const matchesSearch =
         !search ||
         String(user.id).includes(search) ||
@@ -98,6 +133,15 @@ export class Users implements OnInit {
   }
 
   saveUser(): void {
+    if (this.isAgency) {
+      this.form.role = 'DRIVER';
+    }
+
+    if (!this.roles.includes(this.form.role)) {
+      alert('You are not allowed to create this user role');
+      return;
+    }
+
     if (
       !this.form.fullName.trim() ||
       !this.form.email.trim() ||
@@ -113,12 +157,18 @@ export class Users implements OnInit {
       return;
     }
 
+    if (this.isAgency && !this.currentUserId) {
+      alert('Agency session not found. Please login again.');
+      return;
+    }
+
     const payload = {
       fullName: this.form.fullName.trim(),
       email: this.form.email.trim(),
       password: this.form.password.trim(),
       phone: this.form.phone.trim(),
-      role: this.form.role,
+      role: this.isAgency ? 'DRIVER' : this.form.role,
+      agencyId: this.isAgency ? this.currentUserId : null,
     };
 
     this.isSaving = true;
@@ -131,28 +181,30 @@ export class Users implements OnInit {
           this.resetForm();
           this.loadUsers();
         },
-        error: (error) => {
+        error: (error: any) => {
           console.error('Failed to update user', error);
           this.isSaving = false;
           alert('Failed to update user');
           this.cdr.detectChanges();
         },
       });
-    } else {
-      this.userService.createUser(payload).subscribe({
-        next: () => {
-          this.isSaving = false;
-          this.resetForm();
-          this.loadUsers();
-        },
-        error: (error) => {
-          console.error('Failed to create user', error);
-          this.isSaving = false;
-          alert('Failed to create user. Email may already exist.');
-          this.cdr.detectChanges();
-        },
-      });
+
+      return;
     }
+
+    this.userService.createUser(payload).subscribe({
+      next: () => {
+        this.isSaving = false;
+        this.resetForm();
+        this.loadUsers();
+      },
+      error: (error: any) => {
+        console.error('Failed to create user', error);
+        this.isSaving = false;
+        alert('Failed to create user. Email may already exist.');
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   editUser(user: any): void {
@@ -164,7 +216,7 @@ export class Users implements OnInit {
       email: user.email || '',
       password: '',
       phone: user.phone || '',
-      role: user.role || 'USER',
+      role: this.isAgency ? 'DRIVER' : user.role || 'USER',
     };
 
     this.cdr.detectChanges();
@@ -180,7 +232,7 @@ export class Users implements OnInit {
       email: '',
       password: '',
       phone: '',
-      role: 'USER',
+      role: this.isAgency ? 'DRIVER' : 'USER',
     };
 
     this.cdr.detectChanges();

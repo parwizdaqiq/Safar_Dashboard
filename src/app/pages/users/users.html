@@ -1,8 +1,8 @@
 <div class="users-page">
   <div class="page-title">
     <div>
-      <h1>User Management</h1>
-      <p>Create and manage admins, agencies, drivers, security and users</p>
+      <h1>{{ pageTitle }}</h1>
+      <p>{{ pageSubtitle }}</p>
     </div>
 
     <button class="refresh-main" (click)="loadUsers()">Refresh</button>
@@ -10,16 +10,16 @@
 
   <div class="stats-row">
     <div class="stat-box">
-      <span>Total Users</span>
+      <span>{{ isAgency ? 'Total Drivers' : 'Total Users' }}</span>
       <strong>{{ totalUsers }}</strong>
     </div>
 
-    <div class="stat-box">
+    <div class="stat-box" *ngIf="!isAgency">
       <span>Admins</span>
       <strong>{{ adminUsers }}</strong>
     </div>
 
-    <div class="stat-box">
+    <div class="stat-box" *ngIf="!isAgency">
       <span>Agencies</span>
       <strong>{{ agencyUsers }}</strong>
     </div>
@@ -35,8 +35,12 @@
       <div class="form-header">
         <div class="form-icon">👤</div>
         <div>
-          <h3>{{ isEditing ? 'Edit User' : 'Create User' }}</h3>
-          <p>{{ isEditing ? 'Update selected user' : 'Create role-based account' }}</p>
+          <h3>
+            {{ isEditing ? (isAgency ? 'Edit Driver' : 'Edit User') : (isAgency ? 'Create Driver' : 'Create User') }}
+          </h3>
+          <p>
+            {{ isEditing ? 'Update selected user' : isAgency ? 'Create driver account' : 'Create role-based account' }}
+          </p>
         </div>
       </div>
 
@@ -57,14 +61,18 @@
       <input type="text" placeholder="+93..." [(ngModel)]="form.phone" />
 
       <label>Role</label>
-      <select [(ngModel)]="form.role">
+      <select [(ngModel)]="form.role" [disabled]="isAgency">
         <option *ngFor="let role of roles" [value]="role">
           {{ role }}
         </option>
       </select>
 
+      <small *ngIf="isAgency" class="agency-note">
+        Agency accounts can create DRIVER users only.
+      </small>
+
       <button class="primary-btn" (click)="saveUser()" [disabled]="isSaving">
-        {{ isSaving ? 'Saving...' : isEditing ? 'Update User' : 'Create User' }}
+        {{ isSaving ? 'Saving...' : isEditing ? (isAgency ? 'Update Driver' : 'Update User') : (isAgency ? 'Create Driver' : 'Create User') }}
       </button>
 
       <button *ngIf="isEditing" class="secondary-btn" (click)="resetForm()">
@@ -75,7 +83,7 @@
     <div class="table-card">
       <div class="table-header">
         <div>
-          <h3>All Users</h3>
+          <h3>{{ isAgency ? 'My Drivers' : 'All Users' }}</h3>
           <p>{{ filteredUsers.length }} users shown</p>
         </div>
       </div>
@@ -88,8 +96,8 @@
           (input)="applyFilters()"
         />
 
-        <select [(ngModel)]="roleFilter" (change)="applyFilters()">
-          <option value="ALL">All Roles</option>
+        <select [(ngModel)]="roleFilter" (change)="applyFilters()" [disabled]="isAgency">
+          <option value="ALL">{{ isAgency ? 'Drivers' : 'All Roles' }}</option>
           <option *ngFor="let role of roles" [value]="role">
             {{ role }}
           </option>

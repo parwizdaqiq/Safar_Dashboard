@@ -9,7 +9,11 @@
     </div>
 
     <nav>
-      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+      <a
+        routerLink="/"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
         Dashboard
       </a>
 
@@ -22,8 +26,12 @@
         Agencies
       </a>
 
-      <a *ngIf="isAdmin" routerLink="/users" routerLinkActive="active">
-        User Management
+      <a
+        *ngIf="isAdmin || isAgency"
+        routerLink="/users"
+        routerLinkActive="active"
+      >
+        {{ isAgency ? 'Drivers' : 'User Management' }}
       </a>
     </nav>
   </aside>
@@ -33,7 +41,7 @@
       <div>
         <h2>Safar {{ userRole }}</h2>
         <p>
-          {{ isAgency ? 'Manage your vehicles, trips and bookings' : 'Manage routes, trips, bookings and agencies' }}
+          {{ isAgency ? 'Manage your vehicles, trips, bookings and drivers' : 'Manage routes, trips, bookings and agencies' }}
         </p>
       </div>
 

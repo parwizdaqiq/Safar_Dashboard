@@ -3,6 +3,7 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { Booking } from '../../services/booking';
+import { AdminAuth } from '../../services/admin-auth';
 
 @Component({
   selector: 'app-bookings',
@@ -21,6 +22,7 @@ export class Bookings implements OnInit {
 
   constructor(
     private bookingService: Booking,
+    private authService: AdminAuth,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -28,36 +30,56 @@ export class Bookings implements OnInit {
     this.loadBookings();
   }
 
+  get currentUserId(): number | null {
+    return this.authService.getUserId();
+  }
+
+  get isAgency(): boolean {
+    return this.authService.isAgency();
+  }
+
   get totalBookings(): number {
     return this.bookings.length;
   }
 
   get confirmedBookings(): number {
-    return this.bookings.filter((booking) => booking.status === 'CONFIRMED').length;
+    return this.bookings.filter(
+      (booking: any) => booking.status === 'CONFIRMED'
+    ).length;
   }
 
   get cancelledBookings(): number {
-    return this.bookings.filter((booking) => booking.status === 'CANCELLED').length;
+    return this.bookings.filter(
+      (booking: any) => booking.status === 'CANCELLED'
+    ).length;
   }
 
   get confirmedRevenue(): number {
     return this.bookings
-      .filter((booking) => booking.status === 'CONFIRMED')
-      .reduce((sum, booking) => sum + Number(booking.totalPrice || 0), 0);
+      .filter((booking: any) => booking.status === 'CONFIRMED')
+      .reduce(
+        (sum: number, booking: any) => sum + Number(booking.totalPrice || 0),
+        0
+      );
   }
 
   loadBookings(): void {
     this.isLoading = true;
     this.cdr.detectChanges();
 
-    this.bookingService.getAllBookings().subscribe({
-      next: (data) => {
+    const request =
+      this.isAgency && this.currentUserId
+        ? this.bookingService.getAgencyBookings(this.currentUserId)
+        : this.bookingService.getAllBookings();
+
+    request.subscribe({
+      next: (data: any[]) => {
         this.bookings = [...data].reverse();
         this.applyFilters();
         this.isLoading = false;
         this.cdr.detectChanges();
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Failed to load bookings', error);
         this.isLoading = false;
         this.cdr.detectChanges();
@@ -69,7 +91,7 @@ export class Bookings implements OnInit {
   applyFilters(): void {
     const search = this.searchText.trim().toLowerCase();
 
-    this.filteredBookings = this.bookings.filter((booking) => {
+    this.filteredBookings = this.bookings.filter((booking: any) => {
       const matchesSearch =
         !search ||
         String(booking.id).includes(search) ||
@@ -91,14 +113,14 @@ export class Bookings implements OnInit {
     if (booking.status === 'CANCELLED') return;
 
     const confirmed = confirm(
-      `Cancel booking #${booking.id} for ${booking.passengerName}?`
+      `Cancel booking #${booking.id} for ${booking.passengerName || 'Passenger'}?`
     );
 
     if (!confirmed) return;
 
     this.bookingService.cancelBooking(booking.id).subscribe({
       next: () => this.loadBookings(),
-      error: (error) => {
+      error: (error: any) => {
         console.error('Failed to cancel booking', error);
         alert('Failed to cancel booking');
       },

@@ -2,7 +2,9 @@
   <div class="page-title">
     <div>
       <h1>Bookings</h1>
-      <p>View and manage passenger ticket bookings</p>
+      <p>
+        {{ isAgency ? 'View bookings and revenue for your agency trips' : 'View and manage passenger ticket bookings' }}
+      </p>
     </div>
 
     <button class="refresh-main" (click)="loadBookings()">Refresh</button>
@@ -49,7 +51,7 @@
   <div class="table-card">
     <div class="table-header">
       <div>
-        <h3>All Bookings</h3>
+        <h3>{{ isAgency ? 'My Bookings' : 'All Bookings' }}</h3>
         <p>{{ filteredBookings.length }} bookings shown</p>
       </div>
     </div>
