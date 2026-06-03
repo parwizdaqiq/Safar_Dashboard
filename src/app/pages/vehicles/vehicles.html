@@ -2,7 +2,9 @@
   <div class="page-title">
     <div>
       <h1>Vehicles</h1>
-      <p>Create and manage Safar buses and cars</p>
+      <p>
+        {{ isAgency ? 'Create and manage your agency buses and cars' : 'Create and manage Safar buses and cars' }}
+      </p>
     </div>
 
     <button class="refresh-main" (click)="loadVehicles()">Refresh</button>
@@ -49,9 +51,14 @@
       <label>Company Name</label>
       <input
         type="text"
-        placeholder="Company Name"
+        placeholder="Agency name"
         [(ngModel)]="form.companyName"
+        [disabled]="isAgency"
       />
+
+      <small *ngIf="isAgency" class="agency-note">
+        Company name is taken from your agency account and cannot be changed.
+      </small>
 
       <label>Plate Number</label>
       <input
@@ -87,7 +94,7 @@
     <div class="table-card">
       <div class="table-header">
         <div>
-          <h3>All Vehicles</h3>
+          <h3>{{ isAgency ? 'My Vehicles' : 'All Vehicles' }}</h3>
           <p>{{ vehicles.length }} vehicles available</p>
         </div>
       </div>

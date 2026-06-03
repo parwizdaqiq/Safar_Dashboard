@@ -38,9 +38,9 @@ export class Login {
           return;
         }
 
-        if (response.role !== 'ADMIN') {
+        if (response.role !== 'ADMIN' && response.role !== 'AGENCY') {
           this.isLoading = false;
-          alert('Access denied. Admin only.');
+          alert('Only admin and agency accounts can access this dashboard.');
           return;
         }
 

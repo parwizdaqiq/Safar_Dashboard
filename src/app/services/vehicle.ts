@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -9,23 +10,27 @@ export class Vehicle {
 
   constructor(private http: HttpClient) {}
 
-  getAllVehicles() {
+  getAllVehicles(): Observable<any[]> {
     return this.http.get<any[]>(this.apiUrl);
   }
 
-  createVehicle(vehicle: any) {
+  getAgencyVehicles(agencyId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/agency/${agencyId}`);
+  }
+
+  createVehicle(vehicle: any): Observable<any> {
     return this.http.post<any>(this.apiUrl, vehicle);
   }
 
-  updateVehicle(id: number, vehicle: any) {
+  updateVehicle(id: number, vehicle: any): Observable<any> {
     return this.http.put<any>(`${this.apiUrl}/${id}`, vehicle);
   }
 
-  activateVehicle(id: number) {
+  activateVehicle(id: number): Observable<any> {
     return this.http.put<any>(`${this.apiUrl}/${id}/activate`, {});
   }
 
-  deactivateVehicle(id: number) {
+  deactivateVehicle(id: number): Observable<any> {
     return this.http.put<any>(`${this.apiUrl}/${id}/deactivate`, {});
   }
 }

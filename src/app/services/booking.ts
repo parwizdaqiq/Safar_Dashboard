@@ -18,7 +18,16 @@ export class Booking {
     );
   }
 
+  getAgencyBookings(agencyId: number) {
+    return this.http.get<any[]>(
+      `${this.apiUrl}/agency/${agencyId}`
+    );
+  }
+
   cancelBooking(id: number) {
-    return this.http.put<any>(`${this.apiUrl}/${id}/cancel`, {});
+    return this.http.put<any>(
+      `${this.apiUrl}/${id}/cancel`,
+      {}
+    );
   }
 }

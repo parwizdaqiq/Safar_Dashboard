@@ -25,11 +25,23 @@ export class App {
 
   constructor(
     public router: Router,
-    private authService: AdminAuth
+    public authService: AdminAuth
   ) {}
 
   get isLoginPage(): boolean {
     return this.router.url === '/login';
+  }
+
+  get userRole(): string {
+    return this.authService.getRole() ?? '';
+  }
+
+  get isAdmin(): boolean {
+    return this.authService.isAdmin();
+  }
+
+  get isAgency(): boolean {
+    return this.authService.isAgency();
   }
 
   logout(): void {

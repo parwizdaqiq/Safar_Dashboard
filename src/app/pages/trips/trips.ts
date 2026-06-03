@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { Trip } from '../../services/trip';
 import { Route } from '../../services/route';
 import { Vehicle } from '../../services/vehicle';
+import { AdminAuth } from '../../services/admin-auth';
 
 @Component({
   selector: 'app-trips',
@@ -30,34 +31,11 @@ export class Trips implements OnInit {
   isLoading = false;
   isSaving = false;
 
-  get totalTrips(): number {
-    return this.trips.length;
-  }
-
-  get activeTrips(): number {
-    return this.trips.filter((trip) => trip.active === true).length;
-  }
-
-  get todayTrips(): number {
-    const today = new Date().toISOString().split('T')[0];
-    return this.trips.filter((trip) => trip.departureDate === today).length;
-  }
-
-  get averagePrice(): number {
-    if (this.trips.length === 0) return 0;
-
-    const total = this.trips.reduce(
-      (sum, trip) => sum + Number(trip.price || 0),
-      0
-    );
-
-    return Math.round(total / this.trips.length);
-  }
-
   constructor(
     private tripService: Trip,
     private routeService: Route,
     private vehicleService: Vehicle,
+    private authService: AdminAuth,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -67,17 +45,54 @@ export class Trips implements OnInit {
     this.loadTrips();
   }
 
+  get currentUserId(): number | null {
+    return this.authService.getUserId();
+  }
+
+  get isAgency(): boolean {
+    return this.authService.isAgency();
+  }
+
+  get totalTrips(): number {
+    return this.trips.length;
+  }
+
+  get activeTrips(): number {
+    return this.trips.filter((trip: any) => trip.active === true).length;
+  }
+
+  get todayTrips(): number {
+    const today = new Date().toISOString().split('T')[0];
+    return this.trips.filter((trip: any) => trip.departureDate === today).length;
+  }
+
+  get averagePrice(): number {
+    if (this.trips.length === 0) return 0;
+
+    const total = this.trips.reduce(
+      (sum: number, trip: any) => sum + Number(trip.price || 0),
+      0
+    );
+
+    return Math.round(total / this.trips.length);
+  }
+
   loadTrips(): void {
     this.isLoading = true;
     this.cdr.detectChanges();
 
-    this.tripService.getAllTrips().subscribe({
-      next: (data) => {
+    const request =
+      this.isAgency && this.currentUserId
+        ? this.tripService.getAgencyTrips(this.currentUserId)
+        : this.tripService.getAllTrips();
+
+    request.subscribe({
+      next: (data: any[]) => {
         this.trips = [...data].reverse();
         this.isLoading = false;
         this.cdr.detectChanges();
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Failed to load trips', error);
         this.isLoading = false;
         alert('Failed to load trips');
@@ -88,11 +103,11 @@ export class Trips implements OnInit {
 
   loadRoutes(): void {
     this.routeService.getAllRoutes().subscribe({
-      next: (data) => {
-        this.routes = data.filter((route) => route.active === true);
+      next: (data: any[]) => {
+        this.routes = data.filter((route: any) => route.active === true);
         this.cdr.detectChanges();
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Failed to load routes', error);
         this.cdr.detectChanges();
       },
@@ -100,12 +115,17 @@ export class Trips implements OnInit {
   }
 
   loadVehicles(): void {
-    this.vehicleService.getAllVehicles().subscribe({
-      next: (data) => {
-        this.vehicles = data.filter((vehicle) => vehicle.active === true);
+    const request =
+      this.isAgency && this.currentUserId
+        ? this.vehicleService.getAgencyVehicles(this.currentUserId)
+        : this.vehicleService.getAllVehicles();
+
+    request.subscribe({
+      next: (data: any[]) => {
+        this.vehicles = data.filter((vehicle: any) => vehicle.active === true);
         this.cdr.detectChanges();
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Failed to load vehicles', error);
         this.cdr.detectChanges();
       },
@@ -121,6 +141,15 @@ export class Trips implements OnInit {
       !this.form.price
     ) {
       alert('Please fill all fields');
+      return;
+    }
+
+    const selectedVehicle = this.vehicles.find(
+      (vehicle: any) => vehicle.id === this.form.vehicleId
+    );
+
+    if (this.isAgency && !selectedVehicle) {
+      alert('You can only create trips with your own vehicles.');
       return;
     }
 
@@ -142,28 +171,30 @@ export class Trips implements OnInit {
           this.resetForm();
           this.loadTrips();
         },
-        error: (error) => {
+        error: (error: any) => {
           console.error('Failed to update trip', error);
           this.isSaving = false;
           alert('Failed to update trip');
           this.cdr.detectChanges();
         },
       });
-    } else {
-      this.tripService.createTrip(payload).subscribe({
-        next: () => {
-          this.isSaving = false;
-          this.resetForm();
-          this.loadTrips();
-        },
-        error: (error) => {
-          console.error('Failed to create trip', error);
-          this.isSaving = false;
-          alert('Failed to create trip');
-          this.cdr.detectChanges();
-        },
-      });
+
+      return;
     }
+
+    this.tripService.createTrip(payload).subscribe({
+      next: () => {
+        this.isSaving = false;
+        this.resetForm();
+        this.loadTrips();
+      },
+      error: (error: any) => {
+        console.error('Failed to create trip', error);
+        this.isSaving = false;
+        alert('Failed to create trip');
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   editTrip(trip: any): void {
@@ -184,7 +215,7 @@ export class Trips implements OnInit {
   activateTrip(id: number): void {
     this.tripService.activateTrip(id).subscribe({
       next: () => this.loadTrips(),
-      error: (error) => {
+      error: (error: any) => {
         console.error('Failed to activate trip', error);
         alert('Failed to activate trip');
         this.cdr.detectChanges();
@@ -195,7 +226,7 @@ export class Trips implements OnInit {
   deactivateTrip(id: number): void {
     this.tripService.deactivateTrip(id).subscribe({
       next: () => this.loadTrips(),
-      error: (error) => {
+      error: (error: any) => {
         console.error('Failed to deactivate trip', error);
         alert('Failed to deactivate trip');
         this.cdr.detectChanges();
@@ -220,20 +251,20 @@ export class Trips implements OnInit {
   }
 
   getRouteName(routeId: number): string {
-    const route = this.routes.find((item) => item.id === routeId);
+    const route = this.routes.find((item: any) => item.id === routeId);
     return route ? `${route.fromCity} → ${route.toCity}` : `Route #${routeId}`;
   }
 
   getVehicleName(vehicleId: number): string {
-    const vehicle = this.vehicles.find((item) => item.id === vehicleId);
+    const vehicle = this.vehicles.find((item: any) => item.id === vehicleId);
 
     return vehicle
-      ? `${vehicle.companyName} • ${vehicle.plateNumber}`
+      ? `${vehicle.vehicleType} • ${vehicle.plateNumber}`
       : `Vehicle #${vehicleId}`;
   }
 
   getVehicleSeats(vehicleId: number): number {
-    const vehicle = this.vehicles.find((item) => item.id === vehicleId);
+    const vehicle = this.vehicles.find((item: any) => item.id === vehicleId);
     return vehicle ? Number(vehicle.seatCount || 0) : 0;
   }
 

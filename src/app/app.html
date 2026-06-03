@@ -4,7 +4,7 @@
       <div class="brand-icon">S</div>
       <div>
         <h3>Safar</h3>
-        <span>Admin Panel</span>
+        <span>{{ userRole || 'Admin Panel' }}</span>
       </div>
     </div>
 
@@ -12,20 +12,29 @@
       <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
         Dashboard
       </a>
+
       <a routerLink="/trips" routerLinkActive="active">Trips</a>
       <a routerLink="/routes" routerLinkActive="active">Routes</a>
       <a routerLink="/vehicles" routerLinkActive="active">Vehicles</a>
       <a routerLink="/bookings" routerLinkActive="active">Bookings</a>
-      <a routerLink="/agencies" routerLinkActive="active">Agencies</a>
-      <a routerLink="/users" routerLinkActive="active">Users Management</a>
+
+      <a *ngIf="isAdmin" routerLink="/agencies" routerLinkActive="active">
+        Agencies
+      </a>
+
+      <a *ngIf="isAdmin" routerLink="/users" routerLinkActive="active">
+        User Management
+      </a>
     </nav>
   </aside>
 
   <main class="main-content">
     <header class="topbar">
       <div>
-        <h2>Safar Admin</h2>
-        <p>Manage routes, trips, bookings and agencies</p>
+        <h2>Safar {{ userRole }}</h2>
+        <p>
+          {{ isAgency ? 'Manage your vehicles, trips and bookings' : 'Manage routes, trips, bookings and agencies' }}
+        </p>
       </div>
 
       <button class="admin-btn" (click)="logout()">Logout</button>

@@ -6,6 +6,7 @@ import { Booking } from '../../services/booking';
 import { Route } from '../../services/route';
 import { Trip } from '../../services/trip';
 import { Vehicle } from '../../services/vehicle';
+import { AdminAuth } from '../../services/admin-auth';
 
 @Component({
   selector: 'app-dashboard',
@@ -38,6 +39,7 @@ export class Dashboard implements OnInit {
     private bookingService: Booking,
     private vehicleService: Vehicle,
     private routeService: Route,
+    private authService: AdminAuth,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -46,10 +48,22 @@ export class Dashboard implements OnInit {
   }
 
   loadStats(): void {
+    const userId = this.authService.getUserId();
+    const isAgency = this.authService.isAgency();
+
     forkJoin({
-      trips: this.tripService.getAllTrips(),
-      bookings: this.bookingService.getAllBookings(),
-      vehicles: this.vehicleService.getAllVehicles(),
+      trips: isAgency && userId
+        ? this.tripService.getAgencyTrips(userId)
+        : this.tripService.getAllTrips(),
+
+      bookings: isAgency && userId
+        ? this.bookingService.getAgencyBookings(userId)
+        : this.bookingService.getAllBookings(),
+
+      vehicles: isAgency && userId
+        ? this.vehicleService.getAgencyVehicles(userId)
+        : this.vehicleService.getAllVehicles(),
+
       routes: this.routeService.getAllRoutes(),
     }).subscribe({
       next: ({ trips, bookings, vehicles, routes }) => {
@@ -74,7 +88,7 @@ export class Dashboard implements OnInit {
           .reduce((sum, booking) => sum + Number(booking.totalPrice || 0), 0);
 
         this.totalVehicles = vehicles.length;
-        this.totalRoutes = routes.length;
+        this.totalRoutes = isAgency ? this.uniqueRoutes(trips) : routes.length;
         this.totalUsers = this.uniqueUsers(bookings);
         this.totalEmployees = 0;
         this.totalExpenses = 0;
@@ -102,6 +116,18 @@ export class Dashboard implements OnInit {
     return ids.size;
   }
 
+  uniqueRoutes(trips: any[]): number {
+    const routeIds = new Set();
+
+    trips.forEach((trip) => {
+      if (trip.routeId) {
+        routeIds.add(trip.routeId);
+      }
+    });
+
+    return routeIds.size;
+  }
+
   buildMonthlyCharts(bookings: any[]): void {
     const income = Array(12).fill(0);
     const expenses = Array(12).fill(0);
@@ -119,6 +145,7 @@ export class Dashboard implements OnInit {
 
       if (dateValue) {
         const date = new Date(dateValue);
+
         if (!isNaN(date.getTime())) {
           monthIndex = date.getMonth();
         }
@@ -142,16 +169,28 @@ export class Dashboard implements OnInit {
       month,
       income: income[index],
       expense: expenses[index],
-      incomeHeight: Math.max((income[index] / maxIncome) * 100, income[index] > 0 ? 8 : 0),
-      expenseHeight: Math.max((expenses[index] / maxIncome) * 100, expenses[index] > 0 ? 8 : 0),
+      incomeHeight: Math.max(
+        (income[index] / maxIncome) * 100,
+        income[index] > 0 ? 8 : 0
+      ),
+      expenseHeight: Math.max(
+        (expenses[index] / maxIncome) * 100,
+        expenses[index] > 0 ? 8 : 0
+      ),
     }));
 
     this.bookingChart = this.months.map((month, index) => ({
       month,
       booked: booked[index],
       cancelled: cancelled[index],
-      bookedHeight: Math.max((booked[index] / maxBooking) * 100, booked[index] > 0 ? 8 : 0),
-      cancelledHeight: Math.max((cancelled[index] / maxBooking) * 100, cancelled[index] > 0 ? 8 : 0),
+      bookedHeight: Math.max(
+        (booked[index] / maxBooking) * 100,
+        booked[index] > 0 ? 8 : 0
+      ),
+      cancelledHeight: Math.max(
+        (cancelled[index] / maxBooking) * 100,
+        cancelled[index] > 0 ? 8 : 0
+      ),
     }));
   }
 }

@@ -7,6 +7,7 @@ import { Observable } from 'rxjs';
 })
 export class AdminAuth {
   private baseUrl = 'http://localhost:8800/api/auth';
+  private storageKey = 'adminUser';
 
   constructor(private http: HttpClient) {}
 
@@ -18,12 +19,30 @@ export class AdminAuth {
   }
 
   saveSession(user: any): void {
-    localStorage.setItem('adminUser', JSON.stringify(user));
+    localStorage.setItem(this.storageKey, JSON.stringify(user));
   }
 
   getUser(): any {
-    const user = localStorage.getItem('adminUser');
+    const user = localStorage.getItem(this.storageKey);
     return user ? JSON.parse(user) : null;
+  }
+
+  getUserId(): number | null {
+    const user = this.getUser();
+    return user?.userId ?? null;
+  }
+
+  getRole(): string | null {
+    const user = this.getUser();
+    return user?.role ?? null;
+  }
+
+  isAdmin(): boolean {
+    return this.getRole() === 'ADMIN';
+  }
+
+  isAgency(): boolean {
+    return this.getRole() === 'AGENCY';
   }
 
   isLoggedIn(): boolean {
@@ -31,6 +50,6 @@ export class AdminAuth {
   }
 
   logout(): void {
-    localStorage.removeItem('adminUser');
+    localStorage.removeItem(this.storageKey);
   }
 }

@@ -52,7 +52,7 @@
       <select [(ngModel)]="form.vehicleId">
         <option [ngValue]="null">Select Vehicle</option>
         <option *ngFor="let vehicle of vehicles" [ngValue]="vehicle.id">
-          {{ vehicle.companyName }} - {{ vehicle.plateNumber }}
+          {{ vehicle.vehicleType }} • {{ vehicle.plateNumber }}
         </option>
       </select>
 
@@ -134,7 +134,11 @@
               <td class="seat-col">{{ trip.availableSeats }}</td>
 
               <td class="status-col">
-                <span class="status" [class.active]="trip.active" [class.inactive]="!trip.active">
+                <span
+                  class="status"
+                  [class.active]="trip.active"
+                  [class.inactive]="!trip.active"
+                >
                   {{ trip.active ? 'ACTIVE' : 'INACTIVE' }}
                 </span>
               </td>

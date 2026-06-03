@@ -13,19 +13,34 @@ export class Trip {
     return this.http.get<any[]>(this.apiUrl);
   }
 
+  getAgencyTrips(agencyId: number) {
+    return this.http.get<any[]>(
+      `${this.apiUrl}/agency/${agencyId}`
+    );
+  }
+
   createTrip(trip: any) {
     return this.http.post<any>(this.apiUrl, trip);
   }
 
   updateTrip(id: number, trip: any) {
-    return this.http.put<any>(`${this.apiUrl}/${id}`, trip);
+    return this.http.put<any>(
+      `${this.apiUrl}/${id}`,
+      trip
+    );
   }
 
   activateTrip(id: number) {
-    return this.http.put<any>(`${this.apiUrl}/${id}/activate`, {});
+    return this.http.put<any>(
+      `${this.apiUrl}/${id}/activate`,
+      {}
+    );
   }
 
   deactivateTrip(id: number) {
-    return this.http.put<any>(`${this.apiUrl}/${id}/deactivate`, {});
+    return this.http.put<any>(
+      `${this.apiUrl}/${id}/deactivate`,
+      {}
+    );
   }
 }
