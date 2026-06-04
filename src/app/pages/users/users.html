@@ -1,47 +1,201 @@
-<div class="users-page">
-  <div class="page-title">
-    <div>
-      <h1>{{ pageTitle }}</h1>
-      <p>{{ pageSubtitle }}</p>
+<div class="drivers-page-v2">
+  <header class="drivers-topbar">
+    <h1>Good Morning!</h1>
+
+    <div class="booking-search">
+      <span>🔍</span>
+      <input
+        placeholder="Search drivers..."
+        [(ngModel)]="searchText"
+        (input)="applyFilters()"
+      />
     </div>
 
-    <button class="refresh-main" (click)="loadUsers()">Refresh</button>
-  </div>
+    <button class="blue-btn" type="button" (click)="openUserModal()">
+      {{ isAgency ? 'Add Driver +' : 'Add User +' }}
+    </button>
+  </header>
 
-  <div class="stats-row">
-    <div class="stat-box">
+  <section class="driver-stats-row">
+    <div class="driver-stat-card dark">
       <span>{{ isAgency ? 'Total Drivers' : 'Total Users' }}</span>
       <strong>{{ totalUsers }}</strong>
+      <small>{{ isAgency ? 'Drivers in your agency.' : 'All platform users.' }}</small>
     </div>
 
-    <div class="stat-box" *ngIf="!isAgency">
+    <div class="driver-stat-card orange" *ngIf="!isAgency">
       <span>Admins</span>
       <strong>{{ adminUsers }}</strong>
+      <small>Platform admin accounts.</small>
     </div>
 
-    <div class="stat-box" *ngIf="!isAgency">
+    <div class="driver-stat-card purple" *ngIf="!isAgency">
       <span>Agencies</span>
       <strong>{{ agencyUsers }}</strong>
+      <small>Registered travel agencies.</small>
     </div>
 
-    <div class="stat-box">
+    <div class="driver-stat-card dark">
       <span>Drivers</span>
       <strong>{{ driverUsers }}</strong>
+      <small>Driver accounts available.</small>
     </div>
-  </div>
+  </section>
 
-  <div class="content-grid">
-    <div class="form-card">
-      <div class="form-header">
-        <div class="form-icon">👤</div>
+  <section class="drivers-layout-grid">
+    <div class="drivers-list-card">
+      <div class="drivers-list-title">
         <div>
-          <h3>
-            {{ isEditing ? (isAgency ? 'Edit Driver' : 'Edit User') : (isAgency ? 'Create Driver' : 'Create User') }}
-          </h3>
-          <p>
-            {{ isEditing ? 'Update selected user' : isAgency ? 'Create driver account' : 'Create role-based account' }}
-          </p>
+          <h2>{{ isAgency ? 'My Drivers' : 'All Users' }}</h2>
+          <p>{{ filteredUsers.length }} users shown</p>
         </div>
+
+        <select
+          class="driver-role-filter"
+          [(ngModel)]="roleFilter"
+          (change)="applyFilters()"
+          [disabled]="isAgency"
+        >
+          <option value="ALL">{{ isAgency ? 'Drivers' : 'All Roles' }}</option>
+          <option *ngFor="let role of roles" [value]="role">
+            {{ role }}
+          </option>
+        </select>
+      </div>
+
+      <div *ngIf="isLoading" class="loading">Loading users...</div>
+
+      <table *ngIf="!isLoading">
+        <thead>
+          <tr>
+            <th>Profile</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Role</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr
+            *ngFor="let user of filteredUsers"
+            [class.selected]="selectedUser?.id === user.id"
+            (click)="selectUser(user)"
+          >
+            <td>
+              <div class="driver-avatar-img">
+                <img *ngIf="getUserPhoto(user)" [src]="getUserPhoto(user)" alt="Profile" />
+                <span *ngIf="!getUserPhoto(user)">
+                  {{ getUserInitial(user) }}
+                </span>
+              </div>
+            </td>
+
+            <td>
+              <strong>{{ user.fullName || '-' }}</strong>
+              <small>User #{{ user.id }}</small>
+            </td>
+
+            <td>
+              <strong>{{ user.email || '-' }}</strong>
+              <small>Email</small>
+            </td>
+
+            <td>
+              <strong>{{ user.phone || '-' }}</strong>
+              <small>Phone</small>
+            </td>
+
+            <td>
+              <span
+                class="driver-role-badge"
+                [class.admin]="user.role === 'ADMIN'"
+                [class.agency]="user.role === 'AGENCY'"
+                [class.driver]="user.role === 'DRIVER'"
+                [class.security]="user.role === 'SECURITY'"
+                [class.normal]="user.role === 'USER'"
+              >
+                {{ user.role }}
+              </span>
+            </td>
+
+            <td class="driver-actions" (click)="$event.stopPropagation()">
+              <button class="edit-icon" type="button" (click)="editUser(user)">
+                ✎
+              </button>
+            </td>
+          </tr>
+
+          <tr *ngIf="filteredUsers.length === 0">
+            <td colspan="6" class="empty">No users found</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <aside class="driver-detail-card">
+      <ng-container *ngIf="selectedUser; else noUser">
+        <div class="driver-profile-cover">
+          <div class="driver-big-avatar">
+            <img *ngIf="getUserPhoto(selectedUser)" [src]="getUserPhoto(selectedUser)" alt="Profile" />
+            <span *ngIf="!getUserPhoto(selectedUser)">
+              {{ getUserInitial(selectedUser) }}
+            </span>
+          </div>
+        </div>
+
+        <div class="driver-detail-head">
+          <div>
+            <h2>{{ selectedUser.fullName || '-' }}</h2>
+            <p>{{ selectedUser.email || '-' }}</p>
+          </div>
+
+          <span
+            class="driver-role-badge"
+            [class.admin]="selectedUser.role === 'ADMIN'"
+            [class.agency]="selectedUser.role === 'AGENCY'"
+            [class.driver]="selectedUser.role === 'DRIVER'"
+            [class.security]="selectedUser.role === 'SECURITY'"
+            [class.normal]="selectedUser.role === 'USER'"
+          >
+            {{ selectedUser.role }}
+          </span>
+        </div>
+
+        <div class="driver-info-grid">
+          <div>
+            <span>Phone</span>
+            <strong>{{ selectedUser.phone || '-' }}</strong>
+          </div>
+
+          <div>
+            <span>User ID</span>
+            <strong>#{{ selectedUser.id }}</strong>
+          </div>
+        </div>
+
+        <div class="driver-details-block">
+          <strong>User Details</strong>
+          <p>Name: {{ selectedUser.fullName || '-' }}</p>
+          <p>Email: {{ selectedUser.email || '-' }}</p>
+          <p>Role: {{ selectedUser.role || '-' }}</p>
+        </div>
+      </ng-container>
+
+      <ng-template #noUser>
+        <div class="empty">Select a user to view details</div>
+      </ng-template>
+    </aside>
+  </section>
+
+  <div class="vehicle-modal-backdrop" *ngIf="showUserModal">
+    <div class="vehicle-modal">
+      <div class="modal-head">
+        <h2>
+          {{ isEditing ? (isAgency ? 'Edit Driver' : 'Edit User') : (isAgency ? 'Add Driver' : 'Add User') }}
+        </h2>
+        <button type="button" (click)="closeUserModal()">×</button>
       </div>
 
       <label>Full Name</label>
@@ -60,6 +214,18 @@
       <label>Phone</label>
       <input type="text" placeholder="+93..." [(ngModel)]="form.phone" />
 
+        <label>Profile Photo</label>
+
+        <input
+          type="file"
+          accept="image/*"
+          (change)="onProfilePhotoSelected($event)"
+        />
+
+        <div class="photo-preview" *ngIf="form.profilePhoto">
+          <img [src]="form.profilePhoto" alt="Profile preview" />
+        </div>
+
       <label>Role</label>
       <select [(ngModel)]="form.role" [disabled]="isAgency">
         <option *ngFor="let role of roles" [value]="role">
@@ -71,102 +237,14 @@
         Agency accounts can create DRIVER users only.
       </small>
 
-      <button class="primary-btn" (click)="saveUser()" [disabled]="isSaving">
+      <button
+        class="blue-btn full"
+        type="button"
+        (click)="saveUser()"
+        [disabled]="isSaving"
+      >
         {{ isSaving ? 'Saving...' : isEditing ? (isAgency ? 'Update Driver' : 'Update User') : (isAgency ? 'Create Driver' : 'Create User') }}
       </button>
-
-      <button *ngIf="isEditing" class="secondary-btn" (click)="resetForm()">
-        Cancel Edit
-      </button>
-    </div>
-
-    <div class="table-card">
-      <div class="table-header">
-        <div>
-          <h3>{{ isAgency ? 'My Drivers' : 'All Users' }}</h3>
-          <p>{{ filteredUsers.length }} users shown</p>
-        </div>
-      </div>
-
-      <div class="filters-card">
-        <input
-          type="text"
-          placeholder="Search name, email, phone or ID"
-          [(ngModel)]="searchText"
-          (input)="applyFilters()"
-        />
-
-        <select [(ngModel)]="roleFilter" (change)="applyFilters()" [disabled]="isAgency">
-          <option value="ALL">{{ isAgency ? 'Drivers' : 'All Roles' }}</option>
-          <option *ngFor="let role of roles" [value]="role">
-            {{ role }}
-          </option>
-        </select>
-      </div>
-
-      <div *ngIf="isLoading" class="loading">Loading users...</div>
-
-      <div class="table-wrapper" *ngIf="!isLoading">
-        <table>
-          <thead>
-            <tr>
-              <th class="id-col">ID</th>
-              <th class="name-col">Name</th>
-              <th class="email-col">Email</th>
-              <th class="phone-col">Phone</th>
-              <th class="role-col">Role</th>
-              <th class="action-col">Actions</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            <tr *ngFor="let user of filteredUsers">
-              <td class="id-col">
-                <strong>#{{ user.id }}</strong>
-                <small>User ID</small>
-              </td>
-
-              <td class="name-col">
-                <strong class="truncate">{{ user.fullName || '-' }}</strong>
-                <small>Full name</small>
-              </td>
-
-              <td class="email-col">
-                <strong class="truncate">{{ user.email || '-' }}</strong>
-                <small>Email</small>
-              </td>
-
-              <td class="phone-col">
-                <strong>{{ user.phone || '-' }}</strong>
-                <small>Phone</small>
-              </td>
-
-              <td class="role-col">
-                <span
-                  class="role-badge"
-                  [class.admin]="user.role === 'ADMIN'"
-                  [class.agency]="user.role === 'AGENCY'"
-                  [class.driver]="user.role === 'DRIVER'"
-                  [class.security]="user.role === 'SECURITY'"
-                  [class.normal]="user.role === 'USER'"
-                >
-                  {{ user.role }}
-                </span>
-              </td>
-
-              <td class="action-col actions">
-                <button class="edit-btn" (click)="editUser(user)">
-                  Edit
-                </button>
-              </td>
-            </tr>
-
-            <tr *ngIf="filteredUsers.length === 0">
-              <td colspan="6" class="empty">No users found</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
     </div>
   </div>
 </div>

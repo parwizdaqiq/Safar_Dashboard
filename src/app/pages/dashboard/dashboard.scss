@@ -1,257 +1,27 @@
-.bus-dashboard {
-  padding: 16px;
-  background: #f5f9ff;
-}
-
-.green-header {
-  height: 62px;
-  background: linear-gradient(135deg, #3f73e6, #6ca7ff);
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 18px;
-  margin-bottom: 14px;
-
-  h1 {
-    color: #ffffff;
-    font-size: 24px;
-    font-weight: 800;
-    margin: 0;
-  }
-}
-
-.admin-avatar {
-  height: 34px;
-  width: 34px;
-  border-radius: 50%;
-  background: #ffffff;
-  color: #3f73e6;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 900;
-}
-
-.stat-grid {
+.calendar-nav {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 12px;
-  margin-bottom: 16px;
-}
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin: 14px 0 18px;
 
-.stat-card {
-  height: 76px;
-  background: linear-gradient(135deg, #4f8cff 0%, #6ca7ff 50%, #8bc0ff 100%);
-  color: #ffffff;
-  border-radius: 8px;
-  padding: 12px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  box-shadow: 0 8px 18px rgba(79, 140, 255, 0.22);
-
-  .icon {
-    font-size: 28px;
-    line-height: 1;
-  }
-
-  span {
-    display: block;
-    font-size: 13px;
-    font-weight: 700;
-    opacity: 0.95;
-  }
-
-  strong {
-    display: block;
-    margin-top: 5px;
-    font-size: 18px;
+  button {
+    width: 100%;
+    border: none;
+    min-height: 44px;
+    padding: 8px 10px;
+    border-radius: 16px;
+    background: #f3f4f6;
+    color: #111827;
+    font-size: 14px;
     font-weight: 900;
-  }
-}
-
-.chart-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  margin-bottom: 16px;
-}
-
-.chart-card,
-.bottom-card {
-  background: #ffffff;
-  border: 1px solid #e5eeff;
-  border-radius: 10px;
-  padding: 14px;
-  box-shadow: 0 8px 20px rgba(79, 140, 255, 0.08);
-
-  h2 {
-    margin: 0 0 12px;
-    color: #3f73e6;
-    font-size: 16px;
-    font-weight: 800;
-  }
-}
-
-.chart-legend {
-  text-align: center;
-  font-size: 12px;
-  margin-bottom: 8px;
-  color: #475569;
-
-  span {
-    display: inline-block;
-    height: 9px;
-    width: 9px;
-    border-radius: 50%;
-    margin-left: 12px;
-    margin-right: 4px;
-  }
-}
-
-.income-dot,
-.book-dot {
-  background: #4f8cff;
-}
-
-.expense-dot {
-  background: #93c5fd;
-}
-
-.cancel-dot {
-  background: #ef4444;
-}
-
-.bar-chart {
-  height: 240px;
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  align-items: end;
-  gap: 8px;
-  border-left: 1px solid #e5eeff;
-  border-bottom: 1px solid #e5eeff;
-  padding: 10px 8px 0;
-}
-
-.bar-month {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: end;
-  align-items: center;
-
-  span {
-    margin-top: 6px;
-    font-size: 11px;
-    color: #475569;
-  }
-}
-
-.bars {
-  height: 205px;
-  width: 100%;
-  display: flex;
-  align-items: end;
-  justify-content: center;
-  gap: 3px;
-}
-
-.bar {
-  width: 12px;
-  min-height: 2px;
-  border-radius: 2px 2px 0 0;
-
-  &.income,
-  &.book {
-    background: #4f8cff;
+    cursor: pointer;
+    line-height: 1.1;
+    white-space: normal;
   }
 
-  &.expense {
-    background: #93c5fd;
-  }
-
-  &.cancel {
-    background: #ef4444;
-  }
-}
-
-.bottom-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1.4fr;
-  gap: 14px;
-}
-
-.simple-pie {
-  height: 190px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-
-  p {
-    margin-top: 10px;
-    font-size: 12px;
-    color: #475569;
-  }
-}
-
-.pie {
-  height: 120px;
-  width: 120px;
-  border-radius: 50%;
-  background: conic-gradient(#4f8cff 0 65%, #93c5fd 65% 100%);
-}
-
-.blue-pie .pie {
-  background: conic-gradient(#3f73e6 0 60%, #8bc0ff 60% 100%);
-}
-
-.recent-row {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  gap: 12px;
-  align-items: center;
-  padding: 10px 0;
-  border-bottom: 1px solid #e5eeff;
-
-  strong {
-    display: block;
-    font-size: 13px;
-  }
-
-  small {
-    color: #64748b;
-    font-size: 11px;
-  }
-
-  b {
-    font-size: 13px;
-  }
-
-  em {
-    font-style: normal;
-    background: #dbeafe;
-    color: #3f73e6;
-    padding: 5px 9px;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 800;
-
-    &.cancelled {
-      background: #fee2e2;
-      color: #dc2626;
-    }
-  }
-}
-
-@media (max-width: 1200px) {
-  .stat-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .chart-grid,
-  .bottom-grid {
-    grid-template-columns: 1fr;
+  .today-btn {
+    background: #1455ff;
+    color: #ffffff;
+    box-shadow: 0 10px 22px rgba(20, 85, 255, 0.22);
   }
 }

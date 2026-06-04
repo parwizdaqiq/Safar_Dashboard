@@ -1,45 +1,195 @@
-<div class="vehicles-page">
-  <div class="page-title">
-    <div>
-      <h1>Vehicles</h1>
-      <p>
-        {{ isAgency ? 'Create and manage your agency buses and cars' : 'Create and manage Safar buses and cars' }}
-      </p>
+<div class="bus-management-page">
+  <header class="bus-topbar">
+    <h1>Good Morning!</h1>
+
+    <div class="booking-search">
+      <span>🔍</span>
+      <input
+        placeholder="Search buses..."
+        [(ngModel)]="searchText"
+        (input)="applyFilters()"
+      />
     </div>
 
-    <button class="refresh-main" (click)="loadVehicles()">Refresh</button>
-  </div>
+    <button class="blue-btn" type="button" (click)="openAddBusModal()">
+      Add Bus +
+    </button>
+  </header>
 
-  <div class="stats-row">
-    <div class="stat-box">
-      <span>Total Vehicles</span>
-      <strong>{{ totalVehicles }}</strong>
-    </div>
-
-    <div class="stat-box">
-      <span>Active Vehicles</span>
-      <strong>{{ activeVehicles }}</strong>
-    </div>
-
-    <div class="stat-box">
+  <section class="bus-stats-row">
+    <div class="bus-stat-card dark">
       <span>Total Buses</span>
       <strong>{{ totalBuses }}</strong>
+      <small>Full fleet size for operations.</small>
     </div>
 
-    <div class="stat-box">
+    <div class="bus-stat-card orange">
+      <span>Active Buses</span>
+      <strong>{{ activeVehicles }}</strong>
+      <small>Buses currently in service.</small>
+    </div>
+
+    <div class="bus-stat-card purple">
+      <span>Inactive</span>
+      <strong>{{ inactiveVehicles }}</strong>
+      <small>Buses disabled or not active.</small>
+    </div>
+
+    <div class="bus-stat-card dark">
       <span>Total Seats</span>
       <strong>{{ totalSeats }}</strong>
+      <small>Total passenger capacity.</small>
     </div>
-  </div>
+  </section>
 
-  <div class="content-grid">
-    <div class="form-card">
-      <div class="form-header">
-        <div class="form-icon">🚌</div>
-        <div>
-          <h3>{{ isEditing ? 'Edit Vehicle' : 'Create Vehicle' }}</h3>
-          <p>{{ isEditing ? 'Update selected vehicle' : 'Add new transport vehicle' }}</p>
+  <section class="bus-layout-grid">
+    <div class="bus-list-card">
+      <div class="bus-list-title">
+        <h2>Bus List</h2>
+        <p>{{ filteredVehicles.length }} buses shown</p>
+      </div>
+
+      <div *ngIf="isLoading" class="loading">Loading vehicles...</div>
+
+      <table *ngIf="!isLoading">
+        <thead>
+          <tr>
+            <th>Bus Number</th>
+            <th>Status</th>
+            <th>Current Route</th>
+            <th>Plate</th>
+            <th>Capacity</th>
+            <th>Available</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr
+            *ngFor="let vehicle of filteredVehicles"
+            [class.selected]="selectedVehicle?.id === vehicle.id"
+            (click)="selectVehicle(vehicle)"
+          >
+            <td>Bus #{{ vehicle.id }}</td>
+
+            <td>
+              <span
+                class="bus-status"
+                [class.active]="vehicle.active"
+                [class.inactive]="!vehicle.active"
+              >
+                {{ vehicle.active ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+
+            <td>
+              <strong>{{ getVehicleRoute(vehicle) }}</strong>
+              <small>{{ vehicle.vehicleType || 'BUS' }}</small>
+            </td>
+
+            <td>{{ vehicle.plateNumber || '-' }}</td>
+
+            <td>{{ vehicle.seatCount || 0 }} Seats</td>
+
+            <td>{{ getAvailableSeats(vehicle) }} Seats</td>
+
+            <td class="bus-actions" (click)="$event.stopPropagation()">
+              <button class="edit-icon" type="button" (click)="editVehicle(vehicle)">
+                ✎
+              </button>
+
+              <button
+                *ngIf="vehicle.active"
+                class="delete-icon"
+                type="button"
+                (click)="deactivateVehicle(vehicle.id)"
+              >
+                🗑
+              </button>
+
+              <button
+                *ngIf="!vehicle.active"
+                class="edit-icon"
+                type="button"
+                (click)="activateVehicle(vehicle.id)"
+              >
+                ↻
+              </button>
+            </td>
+          </tr>
+
+          <tr *ngIf="filteredVehicles.length === 0">
+            <td colspan="7" class="empty">No vehicles found</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <aside class="bus-detail-card">
+      <ng-container *ngIf="selectedVehicle; else noVehicle">
+        <div class="bus-image-box">🚌</div>
+
+        <div class="bus-detail-head">
+          <div>
+            <h2>Bus #{{ selectedVehicle.id }}</h2>
+            <p>{{ selectedVehicle.plateNumber || '-' }}</p>
+          </div>
+
+          <span
+            class="bus-status"
+            [class.active]="selectedVehicle.active"
+            [class.inactive]="!selectedVehicle.active"
+          >
+            {{ selectedVehicle.active ? 'Active' : 'Inactive' }}
+          </span>
         </div>
+
+        <div class="bus-driver-row">
+          <div class="driver-avatar">
+            {{ (selectedVehicle.plateNumber || 'B').charAt(0).toUpperCase() }}
+          </div>
+
+          <div>
+            <strong>{{ getVehicleRoute(selectedVehicle) }}</strong>
+            <small>{{ selectedVehicle.vehicleType || 'BUS' }}</small>
+          </div>
+        </div>
+
+        <div class="seat-mini-grid">
+          <div>
+            <span>Total Seats</span>
+            <strong>{{ selectedVehicle.seatCount || 0 }}</strong>
+          </div>
+
+          <div>
+            <span>Available Seats</span>
+            <strong>{{ getAvailableSeats(selectedVehicle) }}</strong>
+          </div>
+        </div>
+
+        <div class="bus-route-info">
+          <strong>Route Details</strong>
+          <p>Route: {{ getVehicleRoute(selectedVehicle) }}</p>
+          <p>Plate: {{ selectedVehicle.plateNumber || '-' }}</p>
+        </div>
+
+        <div class="bus-mini-map">
+          <div class="map-node start">Start</div>
+          <div class="map-node end">End</div>
+        </div>
+      </ng-container>
+
+      <ng-template #noVehicle>
+        <div class="empty">Select a bus to view details</div>
+      </ng-template>
+    </aside>
+  </section>
+
+  <div class="vehicle-modal-backdrop" *ngIf="showVehicleModal">
+    <div class="vehicle-modal">
+      <div class="modal-head">
+        <h2>{{ isEditing ? 'Edit Bus' : 'Add Bus' }}</h2>
+        <button type="button" (click)="closeVehicleModal()">×</button>
       </div>
 
       <label>Vehicle Type</label>
@@ -47,18 +197,6 @@
         <option value="BUS">BUS</option>
         <option value="CAR">CAR</option>
       </select>
-
-      <label>Company Name</label>
-      <input
-        type="text"
-        placeholder="Agency name"
-        [(ngModel)]="form.companyName"
-        [disabled]="isAgency"
-      />
-
-      <small *ngIf="isAgency" class="agency-note">
-        Company name is taken from your agency account and cannot be changed.
-      </small>
 
       <label>Plate Number</label>
       <input
@@ -75,114 +213,13 @@
       />
 
       <button
-        class="primary-btn"
+        class="blue-btn full"
+        type="button"
         (click)="saveVehicle()"
         [disabled]="isSaving"
       >
-        {{ isSaving ? 'Saving...' : isEditing ? 'Update Vehicle' : 'Create Vehicle' }}
+        {{ isSaving ? 'Saving...' : isEditing ? 'Update Bus' : 'Create Bus' }}
       </button>
-
-      <button
-        *ngIf="isEditing"
-        class="secondary-btn"
-        (click)="resetForm()"
-      >
-        Cancel Edit
-      </button>
-    </div>
-
-    <div class="table-card">
-      <div class="table-header">
-        <div>
-          <h3>{{ isAgency ? 'My Vehicles' : 'All Vehicles' }}</h3>
-          <p>{{ vehicles.length }} vehicles available</p>
-        </div>
-      </div>
-
-      <div *ngIf="isLoading" class="loading">
-        Loading vehicles...
-      </div>
-
-      <div class="table-wrapper" *ngIf="!isLoading">
-        <table>
-          <thead>
-            <tr>
-              <th class="id-col">ID</th>
-              <th class="type-col">Type</th>
-              <th class="company-col">Company</th>
-              <th class="plate-col">Plate</th>
-              <th class="seat-col">Seats</th>
-              <th class="status-col">Status</th>
-              <th class="action-col">Actions</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            <tr *ngFor="let vehicle of vehicles">
-              <td class="id-col">
-                <strong>#{{ vehicle.id }}</strong>
-                <small>Vehicle ID</small>
-              </td>
-
-              <td class="type-col">
-                <span class="type-badge">{{ vehicle.vehicleType }}</span>
-              </td>
-
-              <td class="company-col">
-                <strong class="truncate">{{ vehicle.companyName }}</strong>
-                <small>Company</small>
-              </td>
-
-              <td class="plate-col">
-                <strong>{{ vehicle.plateNumber }}</strong>
-                <small>Plate</small>
-              </td>
-
-              <td class="seat-col">
-                {{ vehicle.seatCount }}
-              </td>
-
-              <td class="status-col">
-                <span
-                  class="status"
-                  [class.active]="vehicle.active"
-                  [class.inactive]="!vehicle.active"
-                >
-                  {{ vehicle.active ? 'ACTIVE' : 'INACTIVE' }}
-                </span>
-              </td>
-
-              <td class="action-col actions">
-                <button class="edit-btn" (click)="editVehicle(vehicle)">
-                  Edit
-                </button>
-
-                <button
-                  *ngIf="vehicle.active"
-                  class="danger-btn"
-                  (click)="deactivateVehicle(vehicle.id)"
-                >
-                  Disable
-                </button>
-
-                <button
-                  *ngIf="!vehicle.active"
-                  class="success-btn"
-                  (click)="activateVehicle(vehicle.id)"
-                >
-                  Enable
-                </button>
-              </td>
-            </tr>
-
-            <tr *ngIf="vehicles.length === 0">
-              <td colspan="7" class="empty">
-                No vehicles found
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
     </div>
   </div>
 </div>

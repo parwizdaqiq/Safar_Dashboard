@@ -24,7 +24,17 @@ export class AdminAuth {
 
   getUser(): any {
     const user = localStorage.getItem(this.storageKey);
-    return user ? JSON.parse(user) : null;
+
+    if (!user) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(user);
+    } catch {
+      this.logout();
+      return null;
+    }
   }
 
   getUserId(): number | null {
@@ -35,6 +45,23 @@ export class AdminAuth {
   getRole(): string | null {
     const user = this.getUser();
     return user?.role ?? null;
+  }
+
+  getDisplayName(): string {
+    const user = this.getUser();
+
+    return (
+      user?.fullName ||
+      user?.agencyName ||
+      user?.companyName ||
+      user?.name ||
+      'User'
+    );
+  }
+
+  getEmail(): string {
+    const user = this.getUser();
+    return user?.email || '';
   }
 
   isAdmin(): boolean {

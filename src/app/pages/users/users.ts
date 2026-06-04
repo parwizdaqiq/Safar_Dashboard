@@ -14,12 +14,14 @@ import { AdminAuth } from '../../services/admin-auth';
 export class Users implements OnInit {
   users: any[] = [];
   filteredUsers: any[] = [];
+  selectedUser: any = null;
 
   adminRoles = ['ADMIN', 'AGENCY', 'SECURITY', 'USER'];
   agencyRoles = ['DRIVER'];
 
   searchText = '';
   roleFilter = 'ALL';
+  showUserModal = false;
 
   isLoading = false;
   isSaving = false;
@@ -32,6 +34,7 @@ export class Users implements OnInit {
     password: '',
     phone: '',
     role: 'USER',
+    profilePhoto: '',
   };
 
   constructor(
@@ -59,16 +62,6 @@ export class Users implements OnInit {
 
   get roles(): string[] {
     return this.isAgency ? this.agencyRoles : this.adminRoles;
-  }
-
-  get pageTitle(): string {
-    return this.isAgency ? 'Driver Management' : 'User Management';
-  }
-
-  get pageSubtitle(): string {
-    return this.isAgency
-      ? 'Create and manage drivers for your agency'
-      : 'Create and manage admins, agencies, security and users';
   }
 
   get totalUsers(): number {
@@ -100,6 +93,8 @@ export class Users implements OnInit {
       next: (data: any[]) => {
         this.users = [...data].reverse();
         this.applyFilters();
+        this.selectedUser = this.filteredUsers[0] || null;
+
         this.isLoading = false;
         this.cdr.detectChanges();
       },
@@ -118,7 +113,7 @@ export class Users implements OnInit {
     this.filteredUsers = this.users.filter((user: any) => {
       const matchesSearch =
         !search ||
-        String(user.id).includes(search) ||
+        String(user.id || '').toLowerCase().includes(search) ||
         String(user.fullName || '').toLowerCase().includes(search) ||
         String(user.email || '').toLowerCase().includes(search) ||
         String(user.phone || '').toLowerCase().includes(search);
@@ -129,7 +124,60 @@ export class Users implements OnInit {
       return matchesSearch && matchesRole;
     });
 
+    if (
+      this.selectedUser &&
+      !this.filteredUsers.some((user: any) => user.id === this.selectedUser.id)
+    ) {
+      this.selectedUser = this.filteredUsers[0] || null;
+    }
+
     this.cdr.detectChanges();
+  }
+
+  selectUser(user: any): void {
+    this.selectedUser = user;
+  }
+
+  openUserModal(): void {
+    this.resetForm();
+    this.showUserModal = true;
+  }
+
+  closeUserModal(): void {
+    this.showUserModal = false;
+    this.resetForm();
+  }
+
+  onProfilePhotoSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      this.form.profilePhoto = String(reader.result || '');
+      this.cdr.detectChanges();
+    };
+
+    reader.readAsDataURL(file);
+  }
+
+  getUserInitial(user: any): string {
+    return String(user.fullName || user.email || 'U').charAt(0).toUpperCase();
+  }
+
+  getUserPhoto(user: any): string {
+    return (
+      user.profilePhoto ||
+      user.profileImage ||
+      user.avatar ||
+      user.imageUrl ||
+      ''
+    );
   }
 
   saveUser(): void {
@@ -162,46 +210,41 @@ export class Users implements OnInit {
       return;
     }
 
-    const payload = {
+    const payload: any = {
       fullName: this.form.fullName.trim(),
       email: this.form.email.trim(),
-      password: this.form.password.trim(),
       phone: this.form.phone.trim(),
       role: this.isAgency ? 'DRIVER' : this.form.role,
       agencyId: this.isAgency ? this.currentUserId : null,
+      profilePhoto: this.form.profilePhoto,
     };
+
+    if (this.form.password.trim()) {
+      payload.password = this.form.password.trim();
+    }
 
     this.isSaving = true;
     this.cdr.detectChanges();
 
-    if (this.isEditing && this.form.id !== null) {
-      this.userService.updateUser(this.form.id, payload).subscribe({
-        next: () => {
-          this.isSaving = false;
-          this.resetForm();
-          this.loadUsers();
-        },
-        error: (error: any) => {
-          console.error('Failed to update user', error);
-          this.isSaving = false;
-          alert('Failed to update user');
-          this.cdr.detectChanges();
-        },
-      });
+    const request =
+      this.isEditing && this.form.id !== null
+        ? this.userService.updateUser(this.form.id, payload)
+        : this.userService.createUser(payload);
 
-      return;
-    }
-
-    this.userService.createUser(payload).subscribe({
+    request.subscribe({
       next: () => {
         this.isSaving = false;
-        this.resetForm();
+        this.closeUserModal();
         this.loadUsers();
       },
       error: (error: any) => {
-        console.error('Failed to create user', error);
+        console.error('Failed to save user', error);
         this.isSaving = false;
-        alert('Failed to create user. Email may already exist.');
+        alert(
+          this.isEditing
+            ? 'Failed to update user'
+            : 'Failed to create user. Email may already exist.'
+        );
         this.cdr.detectChanges();
       },
     });
@@ -217,8 +260,11 @@ export class Users implements OnInit {
       password: '',
       phone: user.phone || '',
       role: this.isAgency ? 'DRIVER' : user.role || 'USER',
+      profilePhoto: this.getUserPhoto(user),
     };
 
+    this.selectedUser = user;
+    this.showUserModal = true;
     this.cdr.detectChanges();
   }
 
@@ -233,6 +279,7 @@ export class Users implements OnInit {
       password: '',
       phone: '',
       role: this.isAgency ? 'DRIVER' : 'USER',
+      profilePhoto: '',
     };
 
     this.cdr.detectChanges();

@@ -1,139 +1,97 @@
-<div class="bookings-page">
-  <div class="page-title">
-    <div>
-      <h1>Bookings</h1>
-      <p>
-        {{ isAgency ? 'View bookings and revenue for your agency trips' : 'View and manage passenger ticket bookings' }}
-      </p>
+<div class="booking-page-v2">
+  <header class="booking-topbar-v2">
+    <h1>Good Morning!</h1>
+
+    <div class="booking-search">
+      <span>🔍</span>
+      <input
+        placeholder="Search"
+        [(ngModel)]="searchText"
+        (input)="applyFilters()"
+      />
     </div>
 
-    <button class="refresh-main" (click)="loadBookings()">Refresh</button>
-  </div>
-
-  <div class="stats-row">
-    <div class="stat-box">
-      <span>Total Bookings</span>
-      <strong>{{ totalBookings }}</strong>
-    </div>
-
-    <div class="stat-box">
-      <span>Confirmed</span>
-      <strong>{{ confirmedBookings }}</strong>
-    </div>
-
-    <div class="stat-box">
-      <span>Cancelled</span>
-      <strong>{{ cancelledBookings }}</strong>
-    </div>
-
-    <div class="stat-box">
-      <span>Revenue</span>
-      <strong>{{ confirmedRevenue }} AFN</strong>
-    </div>
-  </div>
-
-  <div class="filters-card">
-    <input
-      type="text"
-      placeholder="Search ticket, passenger, phone, trip or group ID"
-      [(ngModel)]="searchText"
-      (input)="applyFilters()"
-    />
-
-    <select [(ngModel)]="statusFilter" (change)="applyFilters()">
-      <option value="ALL">All Status</option>
-      <option value="CONFIRMED">Confirmed</option>
-      <option value="PENDING">Pending</option>
-      <option value="CANCELLED">Cancelled</option>
+    <select class="booking-filter" [(ngModel)]="sortFilter" (change)="applyFilters()">
+      <option value="RECENT">Most Recent</option>
+      <option value="OLDEST">Oldest</option>
     </select>
-  </div>
 
-  <div class="table-card">
-    <div class="table-header">
-      <div>
-        <h3>{{ isAgency ? 'My Bookings' : 'All Bookings' }}</h3>
-        <p>{{ filteredBookings.length }} bookings shown</p>
-      </div>
+    <select class="booking-filter" [(ngModel)]="plateFilter" (change)="applyFilters()">
+      <option value="ALL">All Plates</option>
+      <option *ngFor="let plate of busPlateNumbers" [value]="plate">
+        {{ plate }}
+      </option>
+    </select>
+  </header>
+
+  <section class="booking-table-card">
+    <div class="booking-table-title">
+      <h2>All Booking List</h2>
     </div>
 
     <div *ngIf="isLoading" class="loading">Loading bookings...</div>
 
-    <div class="table-wrapper" *ngIf="!isLoading">
-      <table>
-        <thead>
-          <tr>
-            <th class="ticket-col">Ticket</th>
-            <th class="passenger-col">Passenger</th>
-            <th class="phone-col">Phone</th>
-            <th class="trip-col">Trip</th>
-            <th class="seat-col">Seat</th>
-            <th class="price-col">Price</th>
-            <th class="status-col">Status</th>
-            <th class="group-col">Group</th>
-            <th class="action-col">Actions</th>
-          </tr>
-        </thead>
+    <table *ngIf="!isLoading">
+      <thead>
+        <tr>
+          <th>Passenger</th>
+          <th>Bus Plate</th>
+          <th>Route</th>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Seats</th>
+          <th>Payment</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
 
-        <tbody>
-          <tr *ngFor="let booking of filteredBookings">
-            <td class="ticket-col">
-              <strong>#{{ booking.id }}</strong>
-              <small>Ticket ID</small>
-            </td>
+      <tbody>
+        <tr *ngFor="let booking of filteredBookings">
+          <td>
+            <strong>{{ booking.passengerName || booking.fullName || 'Passenger' }}</strong>
+            <small>{{ booking.passengerPhone || 'Ticket #' + booking.id }}</small>
+          </td>
 
-            <td class="passenger-col">
-              <strong class="truncate">{{ booking.passengerName || '-' }}</strong>
-              <small>Passenger</small>
-            </td>
+          <td>
+            <span class="plate-badge">{{ getBusPlate(booking) }}</span>
+          </td>
 
-            <td class="phone-col">
-              <strong>{{ booking.passengerPhone || '-' }}</strong>
-              <small>Phone</small>
-            </td>
+          <td>{{ getBookingRoute(booking) }}</td>
+          <td>{{ getBookingDate(booking) }}</td>
+          <td>{{ getBookingTime(booking) }}</td>
+          <td>{{ booking.seatNumber || booking.seats || '-' }}</td>
+          <td>{{ booking.totalPrice || 0 }} AFN</td>
 
-            <td class="trip-col">
-              <span class="trip-badge">Trip #{{ booking.tripId }}</span>
-            </td>
+          <td>
+            <span
+              class="booking-status"
+              [class.completed]="booking.status === 'CONFIRMED'"
+              [class.pending]="booking.status === 'PENDING'"
+              [class.cancelled]="booking.status === 'CANCELLED'"
+            >
+              {{ booking.status }}
+            </span>
+          </td>
 
-            <td class="seat-col">
-              {{ booking.seatNumber }}
-            </td>
+          <td class="booking-action">
+            <button class="edit-icon" type="button" title="Edit">✎</button>
+            <button
+              class="delete-icon"
+              type="button"
+              title="Delete / Cancel"
+              [disabled]="booking.status === 'CANCELLED'"
+              (click)="cancelBooking(booking)"
+            >
+              🗑
+            </button>
+          </td>
+        </tr>
 
-            <td class="price-col">
-              <span class="price-badge">{{ booking.totalPrice || 0 }} AFN</span>
-            </td>
-
-            <td class="status-col">
-              <span
-                class="status"
-                [class.confirmed]="booking.status === 'CONFIRMED'"
-                [class.pending]="booking.status === 'PENDING'"
-                [class.cancelled]="booking.status === 'CANCELLED'"
-              >
-                {{ booking.status }}
-              </span>
-            </td>
-
-            <td class="group-col">
-              <span class="truncate">{{ booking.bookingGroupId || '-' }}</span>
-            </td>
-
-            <td class="action-col actions">
-              <button
-                class="danger-btn"
-                [disabled]="booking.status === 'CANCELLED'"
-                (click)="cancelBooking(booking)"
-              >
-                Cancel
-              </button>
-            </td>
-          </tr>
-
-          <tr *ngIf="filteredBookings.length === 0">
-            <td colspan="9" class="empty">No bookings found</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+        <tr *ngIf="filteredBookings.length === 0">
+          <td colspan="9" class="empty">No bookings found</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
 </div>

@@ -1,56 +1,42 @@
 <div class="admin-shell" *ngIf="!isLoginPage">
-  <aside class="sidebar">
-    <div class="brand">
-      <div class="brand-icon">S</div>
+  <aside class="safar-sidebar">
+    <div class="safar-brand">
+      <div class="safar-logo">🚌</div>
       <div>
         <h3>Safar</h3>
         <span>{{ userRole || 'Admin Panel' }}</span>
       </div>
     </div>
 
-    <nav>
-      <a
-        routerLink="/"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }"
-      >
-        Dashboard
-      </a>
-
+    <nav class="safar-nav">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Dashboard</a>
+      <a routerLink="/bookings" routerLinkActive="active">Bookings</a>
       <a routerLink="/trips" routerLinkActive="active">Trips</a>
       <a routerLink="/routes" routerLinkActive="active">Routes</a>
-      <a routerLink="/vehicles" routerLinkActive="active">Vehicles</a>
-      <a routerLink="/bookings" routerLinkActive="active">Bookings</a>
+      <a routerLink="/vehicles" routerLinkActive="active">Buses</a>
 
-      <a *ngIf="isAdmin" routerLink="/agencies" routerLinkActive="active">
-        Agencies
-      </a>
+      <a *ngIf="isAdmin" routerLink="/agencies" routerLinkActive="active">Agencies</a>
 
-      <a
-        *ngIf="isAdmin || isAgency"
-        routerLink="/users"
-        routerLinkActive="active"
-      >
+      <a *ngIf="isAdmin || isAgency" routerLink="/users" routerLinkActive="active">
         {{ isAgency ? 'Drivers' : 'User Management' }}
       </a>
+
+      <div class="nav-divider"></div>
+
+      <a>Settings</a>
+      <a (click)="logout()">Logout</a>
     </nav>
+
+    <div class="sidebar-card">
+      <div class="sidebar-bus">🚌</div>
+      <h4>Deliver Safe Journeys</h4>
+      <p>Every Mile, Every Time</p>
+      <button>View Reports →</button>
+    </div>
   </aside>
 
-  <main class="main-content">
-    <header class="topbar">
-      <div>
-        <h2>Safar {{ userRole }}</h2>
-        <p>
-          {{ isAgency ? 'Manage your vehicles, trips, bookings and drivers' : 'Manage routes, trips, bookings and agencies' }}
-        </p>
-      </div>
-
-      <button class="admin-btn" (click)="logout()">Logout</button>
-    </header>
-
-    <section class="page-content">
-      <router-outlet></router-outlet>
-    </section>
+  <main class="safar-main">
+    <router-outlet></router-outlet>
   </main>
 </div>
 

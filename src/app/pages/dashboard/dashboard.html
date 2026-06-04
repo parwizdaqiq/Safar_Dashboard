@@ -1,193 +1,230 @@
-<div class="bus-dashboard">
-  <div class="green-header">
-    <h1>Dashboard</h1>
-    <div class="admin-avatar">A</div>
-  </div>
+<div class="dashboard-page">
+  <header class="dashboard-header">
+    <h1>Good Morning, {{ displayName }}! 👋</h1>
 
-  <div class="stat-grid">
-    <div class="stat-card">
-      <div class="icon">👤</div>
-      <div>
-        <span>Total User</span>
-        <strong>{{ totalUsers }}</strong>
-      </div>
+    <div class="search-box">
+      <span>🔍</span>
+      <input
+        placeholder="Search bookings..."
+        [(ngModel)]="searchTerm"
+        (input)="onSearch()"
+      />
     </div>
 
-    <div class="stat-card">
-      <div class="icon">🎫</div>
-      <div>
-        <span>Total Booking</span>
-        <strong>{{ totalBookings }}</strong>
-      </div>
+    <div class="next-bus">
+      🚌 Next Trip
+      <b>{{ selectedDateTrips[0] ? getTripTime(selectedDateTrips[0]) : 'No active trip' }}</b>
     </div>
 
-    <div class="stat-card">
-      <div class="icon">🎟️</div>
+    <div class="admin-profile" title="Agency profile">
+      <div class="avatar">{{ displayName.charAt(0).toUpperCase() }}</div>
       <div>
-        <span>Total Canceled</span>
-        <strong>{{ cancelledBookings }}</strong>
+        <strong>{{ displayName }}</strong>
+        <span>{{ portalRole }} Portal</span>
       </div>
     </div>
+  </header>
 
-    <div class="stat-card">
-      <div class="icon">؋</div>
-      <div>
-        <span>Total Earning</span>
-        <strong>{{ totalRevenue }} AFN</strong>
-      </div>
+  <section class="top-stats">
+    <div class="stat-card-v2 purple">
+      <span>Total Earnings</span>
+      <strong>{{ totalRevenue }} AFN</strong>
+      <small>{{ confirmedBookings }} confirmed bookings</small>
+      <em>💰</em>
     </div>
 
-    <div class="stat-card">
-      <div class="icon">؋</div>
-      <div>
-        <span>Total Refund</span>
-        <strong>{{ totalRefund }} AFN</strong>
-      </div>
+    <div class="stat-card-v2 orange">
+      <span>Total Bookings</span>
+      <strong>{{ totalBookings }}</strong>
+      <small>{{ cancelledBookings }} cancelled bookings</small>
+      <em>🎫</em>
     </div>
 
-    <div class="stat-card">
-      <div class="icon">؋</div>
-      <div>
-        <span>Total Expenses</span>
-        <strong>{{ totalExpenses }} AFN</strong>
-      </div>
+    <div class="stat-card-v2 dark">
+      <span>Active Trips</span>
+      <strong>{{ activeTrips }} / {{ totalTrips }}</strong>
+      <small>Total active schedules</small>
+      <em>🚌</em>
     </div>
 
-    <div class="stat-card">
-      <div class="icon">🚌</div>
-      <div>
-        <span>Total Bus</span>
-        <strong>{{ totalVehicles }}</strong>
-      </div>
+    <div class="stat-card-v2 blue">
+      <span>Total Buses</span>
+      <strong>{{ totalVehicles }}</strong>
+      <small>{{ totalRoutes }} routes available</small>
+      <em>🚍</em>
     </div>
+  </section>
 
-    <div class="stat-card">
-      <div class="icon">🚌</div>
-      <div>
-        <span>Ongoing Bus</span>
-        <strong>{{ activeTrips }}</strong>
-      </div>
-    </div>
-
-    <div class="stat-card">
-      <div class="icon">🚌</div>
-      <div>
-        <span>AC Bus</span>
-        <strong>{{ totalVehicles }}</strong>
-      </div>
-    </div>
-
-    <div class="stat-card">
-      <div class="icon">🚌</div>
-      <div>
-        <span>Non AC Bus</span>
-        <strong>0</strong>
-      </div>
-    </div>
-
-    <div class="stat-card">
-      <div class="icon">🛣️</div>
-      <div>
-        <span>Total Routes</span>
-        <strong>{{ totalRoutes }}</strong>
-      </div>
-    </div>
-
-    <div class="stat-card">
-      <div class="icon">👥</div>
-      <div>
-        <span>Total Employee</span>
-        <strong>{{ totalEmployees }}</strong>
-      </div>
-    </div>
-  </div>
-
-  <div class="chart-grid">
-    <section class="chart-card">
-      <h2>Income & Expense</h2>
-
-      <div class="chart-legend">
-        <span class="income-dot"></span> Income
-        <span class="expense-dot"></span> Expenses
+  <section class="dashboard-grid">
+    <div class="white-card bus-card">
+      <div class="card-head">
+        <div>
+          <h2>Bus List</h2>
+          <p>{{ totalVehicles }} buses registered</p>
+        </div>
+        <a routerLink="/vehicles" class="view-link">All Buses</a>
       </div>
 
-      <div class="bar-chart">
-        <div class="bar-month" *ngFor="let item of incomeChart">
-          <div class="bars">
-            <div
-              class="bar income"
-              [style.height.%]="item.incomeHeight"
-              [title]="item.income"
-            ></div>
-            <div
-              class="bar expense"
-              [style.height.%]="item.expenseHeight"
-              [title]="item.expense"
-            ></div>
+      <div class="bus-content">
+        <div class="bus-list">
+          <div
+            class="bus-item"
+            *ngFor="let vehicle of activeVehicleCards; let i = index"
+            [class.selected]="i === 0"
+          >
+            <div>
+              <strong>{{ getVehicleName(vehicle) }}</strong>
+              <span>{{ getVehicleNumber(vehicle) }}</span>
+            </div>
+            <b>{{ vehicle.status || 'Active' }}</b>
           </div>
-          <span>{{ item.month }}</span>
+
+          <div class="empty-state" *ngIf="activeVehicleCards.length === 0">
+            No buses found
+          </div>
+        </div>
+
+        <div class="map-box">
+          <div class="map-popup">
+            {{ activeVehicleCards[0] ? getVehicleName(activeVehicleCards[0]) : 'No bus selected' }}
+            <small>{{ selectedDateTrips[0] ? getTripRoute(selectedDateTrips[0]) : 'No trip selected' }}</small>
+          </div>
+          <div class="map-bus">🚌</div>
         </div>
       </div>
-    </section>
+    </div>
 
-    <section class="chart-card">
-      <h2>Ticket Booking & Canceled</h2>
+    <div class="white-card activity-card">
+      <div class="card-head">
+        <div>
+          <h2>Trip Calendar</h2>
+          <p>{{ selectedDateLabel }} active trips</p>
+        </div>
 
-      <div class="chart-legend">
-        <span class="book-dot"></span> Book
-        <span class="cancel-dot"></span> Cancel
+        <a routerLink="/trips" class="view-link">View All</a>
       </div>
 
-      <div class="bar-chart">
-        <div class="bar-month" *ngFor="let item of bookingChart">
-          <div class="bars">
-            <div
-              class="bar book"
-              [style.height.%]="item.bookedHeight"
-              [title]="item.booked"
-            ></div>
-            <div
-              class="bar cancel"
-              [style.height.%]="item.cancelledHeight"
-              [title]="item.cancelled"
-            ></div>
-          </div>
-          <span>{{ item.month }}</span>
+      <div class="calendar-nav">
+        <button (click)="changeCalendarDay(-1)">← Yesterday</button>
+        <button class="today-btn" (click)="goToday()">Today</button>
+        <button (click)="changeCalendarDay(1)">Tomorrow →</button>
+      </div>
+
+      <div class="mini-calendar">
+        <div class="calendar-day active">
+          <span>{{ selectedDateLabel }}</span>
+          <strong>{{ selectedDateTrips.length }}</strong>
+          <small>Trips</small>
+        </div>
+
+        <div class="calendar-day">
+          <span>Buses</span>
+          <strong>{{ totalVehicles }}</strong>
+          <small>Active</small>
+        </div>
+
+        <div class="calendar-day">
+          <span>Routes</span>
+          <strong>{{ totalRoutes }}</strong>
+          <small>Total</small>
         </div>
       </div>
-    </section>
-  </div>
 
-  <div class="bottom-grid">
-    <section class="bottom-card">
-      <h2>Bus Booking</h2>
-      <div class="simple-pie">
-        <div class="pie"></div>
-        <p>AC Bus / Non-AC Bus</p>
+      <div class="calendar-trip-list">
+        <div class="calendar-trip" *ngFor="let trip of selectedDateTrips">
+          <div class="calendar-time">{{ getTripTime(trip) }}</div>
+
+          <div>
+            <strong>{{ getTripRoute(trip) }}</strong>
+            <span>Bus #{{ getTripBus(trip) }}</span>
+          </div>
+        </div>
+
+        <div class="empty-state" *ngIf="selectedDateTrips.length === 0">
+          No trips for {{ selectedDateLabel }}
+        </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <section class="bottom-card">
-      <h2>Ticket Booking</h2>
-      <div class="simple-pie blue-pie">
-        <div class="pie"></div>
-        <p>Online / Counter</p>
+  <section class="dashboard-grid bottom">
+    <div class="white-card table-card">
+      <div class="card-head">
+        <h2>Recent Bookings</h2>
+        <a routerLink="/bookings" class="view-link">All Bookings</a>
       </div>
-    </section>
 
-    <section class="bottom-card">
-      <h2>Recent Bookings</h2>
+      <table class="clean-table" *ngIf="recentBookings.length > 0">
+        <thead>
+          <tr>
+            <th>Passenger</th>
+            <th>Route</th>
+            <th>Date / Time</th>
+            <th>Seats</th>
+            <th>Payment</th>
+            <th>Status</th>
+          </tr>
+        </thead>
 
-      <div class="recent-row" *ngFor="let booking of recentBookings">
-        <span>
-          <strong>{{ booking.passengerName || 'Passenger' }}</strong>
-          <small>Ticket #{{ booking.id }}</small>
-        </span>
-        <b>{{ booking.totalPrice || 0 }} AFN</b>
-        <em [class.cancelled]="booking.status === 'CANCELLED'">
-          {{ booking.status }}
-        </em>
+        <tbody>
+          <tr *ngFor="let booking of recentBookings">
+            <td>
+              <div class="passenger-cell">
+                <div class="mini-avatar">
+                  {{ (booking.passengerName || booking.fullName || 'P').charAt(0).toUpperCase() }}
+                </div>
+                <div>
+                  <strong>{{ booking.passengerName || booking.fullName || 'Passenger' }}</strong>
+                  <span>Ticket #{{ booking.id }}</span>
+                </div>
+              </div>
+            </td>
+
+            <td>{{ getBookingRoute(booking) }}</td>
+
+            <td>
+              {{ getBookingDate(booking) }}
+              <br />
+              {{ booking.departureTime || booking.time || '-' }}
+            </td>
+
+            <td>{{ booking.seatNumber || booking.seats || '-' }}</td>
+            <td>{{ booking.totalPrice || 0 }} AFN</td>
+
+            <td>
+              <span
+                class="status-pill"
+                [class.cancelled]="booking.status === 'CANCELLED'"
+                [class.confirmed]="booking.status === 'CONFIRMED'"
+              >
+                {{ booking.status || 'Pending' }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="empty-state" *ngIf="recentBookings.length === 0">
+        No bookings found
       </div>
-    </section>
-  </div>
+    </div>
+
+    <div class="white-card upcoming-card">
+      <div class="card-head">
+        <h2>Upcoming Trips</h2>
+        <a routerLink="/trips" class="view-link">View All</a>
+      </div>
+
+      <div class="trip-item" *ngFor="let trip of upcomingTrips.slice(0, 4)">
+        <span></span>
+        <b>{{ getTripTime(trip) }}</b>
+        <strong>{{ getTripRoute(trip) }}</strong>
+        <em>Bus #{{ getTripBus(trip) }}</em>
+      </div>
+
+      <div class="empty-state" *ngIf="upcomingTrips.length === 0">
+        No upcoming trips found
+      </div>
+    </div>
+  </section>
 </div>
